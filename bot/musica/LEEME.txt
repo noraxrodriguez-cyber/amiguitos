@@ -1,0 +1,3 @@
+Pon aquí tus pistas en mp3, ogg, wav o m4a.
+Usa solo música libre de derechos (YouTube Audio Library, Free Music Archive, etc.)
+o sonidos propios. El bot reproduce lo que haya en esta carpeta.

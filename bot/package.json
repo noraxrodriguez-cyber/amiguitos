@@ -1,0 +1,20 @@
+{
+  "name": "pancho-el-tesorero",
+  "version": "1.0.0",
+  "description": "Bot de música para el servidor AMIGUITOS",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node --env-file=.env index.js",
+    "registrar": "node --env-file=.env registrar.js"
+  },
+  "engines": {
+    "node": ">=20.6"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@discordjs/voice": "^0.19.2",
+    "discord.js": "^14.28.1",
+    "libsodium-wrappers": "^0.8.4"
+  }
+}
