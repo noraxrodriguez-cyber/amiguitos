@@ -6,37 +6,134 @@
 <title>AMIGUITOS · Sim económico</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  :root { --bg:#1e1f25; --panel:#2a2c35; --panel2:#33363f; --text:#f2f3f5; --muted:#a3a7b3; --accent:#ff7a59; --accent2:#7c83ff; --gold:#ffd166; --ok:#57f287; --bad:#ff5c5c; --neon:#49f2a0; }
+  :root {
+    --bg:#0f1016; --bg2:#171924; --card:#1d2030; --card2:#252a3d; --line:#ffffff14;
+    --text:#f4f5f8; --muted:#9aa0b4; --accent:#ff7a59; --accent2:#7c83ff; --gold:#ffd166;
+    --ok:#57f287; --bad:#ff5c5c; --neon:#49f2a0;
+    --grad: linear-gradient(135deg, #ff7a59 0%, #ff4f8b 50%, #7c83ff 100%);
+  }
   * { box-sizing:border-box; }
-  body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
-  header { display:flex; align-items:center; justify-content:space-between; padding:14px 22px; position:sticky; top:0; background:rgba(30,31,37,.92); z-index:10; border-bottom:1px solid #ffffff10; flex-wrap:wrap; gap:8px; }
-  .brand { font-weight:800; font-size:20px; } .brand span { color:var(--accent); }
-  nav { display:flex; gap:4px; flex-wrap:wrap; }
-  nav button { background:none; border:0; color:var(--muted); font:inherit; padding:8px 12px; border-radius:10px; cursor:pointer; }
-  nav button.active, nav button:hover { color:var(--text); background:var(--panel2); }
-  main { max-width:1080px; margin:0 auto; padding:24px 18px 80px; }
-  section { display:none; } section.active { display:block; }
-  h2 { margin:0 0 4px; } .sub { color:var(--muted); margin:0 0 16px; font-size:14px; }
-  .panel { background:var(--panel); border:1px solid #ffffff10; border-radius:18px; padding:18px; margin-bottom:14px; }
-  .grid2 { display:grid; gap:14px; grid-template-columns:1fr 1fr; } @media (max-width:760px) { .grid2 { grid-template-columns:1fr; } }
-  .balance { font-size:38px; font-weight:800; color:var(--gold); }
-  .neon { color:var(--neon); font-size:30px; font-weight:800; }
-  .row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px solid #ffffff0d; flex-wrap:wrap; }
-  .row:last-child { border-bottom:0; }
+  body {
+    margin:0; min-height:100vh; color:var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background:
+      radial-gradient(900px 500px at 10% -10%, #7c83ff33, transparent 60%),
+      radial-gradient(800px 500px at 110% 10%, #ff7a5933, transparent 60%),
+      var(--bg);
+    background-attachment: fixed;
+  }
+
+  /* ---------- Cabecera ---------- */
+  header {
+    position:sticky; top:0; z-index:10;
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    padding:12px 20px; background:rgba(15,16,22,.8); backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .brand { font-weight:900; font-size:22px; letter-spacing:.5px; }
+  .brand .x { background:var(--grad); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .dia { color:var(--muted); font-size:13px; margin-left:8px; font-weight:500; }
+  nav { display:flex; gap:6px; flex-wrap:wrap; }
+  nav button {
+    background:transparent; border:1px solid transparent; color:var(--muted); font:inherit; font-weight:600;
+    padding:8px 14px; border-radius:999px; cursor:pointer; transition:.15s;
+  }
+  nav button:hover { color:var(--text); background:var(--card); }
+  nav button.active { color:#fff; background:var(--grad); }
+  nav button.salir { border-color:var(--line); }
+
+  main { max-width:1120px; margin:0 auto; padding:26px 18px 90px; }
+  section { display:none; animation: fade .35s ease; }
+  section.active { display:block; }
+  @keyframes fade { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+
+  h2 { margin:0 0 4px; font-size:28px; font-weight:800; }
+  .sub { color:var(--muted); margin:0 0 20px; font-size:14px; }
+
+  .grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); }
+  .grid.two { grid-template-columns:repeat(auto-fit, minmax(340px, 1fr)); }
+
+  .card {
+    background:linear-gradient(180deg, var(--card2), var(--card)); border:1px solid var(--line);
+    border-radius:20px; padding:20px; box-shadow:0 10px 30px #00000033;
+  }
+  .card h3 { margin:0 0 6px; font-size:17px; }
+  .label { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:1px; font-weight:700; }
+  .big { font-size:40px; font-weight:900; color:var(--gold); line-height:1.1; margin:6px 0; }
+  .neon { font-size:32px; font-weight:900; color:var(--neon); margin:6px 0; }
   .muted { color:var(--muted); font-size:14px; }
-  .btn { display:inline-flex; align-items:center; gap:6px; border:0; border-radius:12px; padding:10px 15px; font:inherit; font-weight:700; cursor:pointer; background:var(--accent); color:#1b1b1b; }
-  .btn.alt { background:var(--panel2); color:var(--text); }
-  .btn.neon { background:var(--neon); color:#031a10; }
-  .btn:disabled { opacity:.45; cursor:not-allowed; }
-  input, select { background:var(--panel2); border:1px solid #ffffff14; color:var(--text); padding:9px 11px; border-radius:10px; font:inherit; }
-  .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--panel2); padding:12px 18px; border-radius:12px; opacity:0; transition:opacity .25s; pointer-events:none; z-index:20; max-width:90vw; }
-  .toast.show { opacity:1; }
   .bad { color:var(--bad); } .ok { color:var(--ok); }
-  .login { max-width:480px; margin:60px auto; text-align:center; }
-  .login h1 { font-size:34px; margin:0 0 8px; }
+
+  .hero {
+    border-radius:24px; padding:28px; margin-bottom:18px; position:relative; overflow:hidden;
+    background: var(--grad); color:#fff;
+  }
+  .hero h1 { margin:0 0 6px; font-size:34px; font-weight:900; }
+  .hero p { margin:0; opacity:.92; }
+  .stats { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+  .stat { background:#00000026; border-radius:14px; padding:10px 14px; min-width:110px; }
+  .stat b { display:block; font-size:20px; }
+  .stat span { font-size:12px; opacity:.85; }
+
+  .news { display:flex; flex-direction:column; gap:12px; }
+  .new { border-left:4px solid var(--accent); padding:12px 14px; background:#ffffff08; border-radius:12px; }
+  .new small { color:var(--muted); }
+  .new p { margin:4px 0 0; }
+
+  .row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 0; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  .row:last-child { border-bottom:0; }
+
+  .btn {
+    display:inline-flex; align-items:center; justify-content:center; gap:6px; border:0; border-radius:12px;
+    padding:10px 16px; font:inherit; font-weight:700; cursor:pointer; color:#fff; background:var(--grad);
+    transition:transform .1s, opacity .15s;
+  }
+  .btn:hover { transform:translateY(-1px); }
+  .btn.alt { background:var(--card2); border:1px solid var(--line); color:var(--text); }
+  .btn.neon { background:var(--neon); color:#03170f; }
+  .btn:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+
+  input, select {
+    background:var(--bg2); border:1px solid var(--line); color:var(--text);
+    padding:10px 12px; border-radius:12px; font:inherit; min-width:0;
+  }
+  input:focus, select:focus { outline:2px solid #7c83ff66; }
+
+  .chips { display:flex; gap:8px; flex-wrap:wrap; }
+  .chip { background:var(--bg2); border:1px solid var(--line); border-radius:999px; padding:6px 12px; font-size:13px; color:var(--muted); }
+
+  /* Mercado oscuro */
+  .dark-wrap {
+    border-radius:22px; padding:22px; background:#070a09; border:1px solid #49f2a04d;
+    font-family: ui-monospace, Menlo, Consolas, monospace; color:#c9f7e3;
+  }
+  .dark-wrap h2 { color:var(--neon); font-family:inherit; }
+  .dark-wrap .muted { color:#7ea596; }
+
   .aviso { background:#7c83ff1a; border:1px dashed #7c83ff66; color:var(--muted); padding:12px 14px; border-radius:12px; font-size:13px; line-height:1.5; margin-top:14px; }
-  .dark { background:#0d0f0e; border:1px solid #49f2a044; color:#c9f7e3; font-family: ui-monospace, Menlo, Consolas, monospace; }
-  .dark h2 { color:var(--neon); }
+
+  /* Login */
+  .login { max-width:460px; margin:70px auto; text-align:center; }
+  .login .logo { font-size:48px; font-weight:900; margin-bottom:6px; }
+  .login .logo span { background:var(--grad); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .login p { color:var(--muted); }
+  .login .btn { font-size:16px; padding:14px 22px; margin-top:8px; }
+
+  .toast {
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--card2);
+    border:1px solid var(--line); padding:12px 18px; border-radius:14px; box-shadow:0 10px 30px #0008;
+    opacity:0; transition:opacity .25s; pointer-events:none; z-index:20; max-width:90vw;
+  }
+  .toast.show { opacity:1; }
+
+  @media (max-width:640px) {
+    header { padding:10px 12px; }
+    nav { width:100%; overflow-x:auto; flex-wrap:nowrap; padding-bottom:4px; }
+    nav button { white-space:nowrap; }
+    h2 { font-size:24px; }
+    .big { font-size:34px; }
+    .hero h1 { font-size:26px; }
+  }
 </style>
 </head>
 <body>
@@ -48,67 +145,102 @@
 </script>
 
 <header>
-  <div class="brand">AMI<span>GUITOS</span> <span class="muted" id="diaTxt"></span></div>
+  <div class="brand"><span class="x">AMIGUITOS</span><span class="dia" id="diaTxt"></span></div>
   <nav id="tabs" style="display:none">
-    <button data-tab="economia" class="active">Economía</button>
+    <button data-tab="inicio" class="active">Inicio</button>
+    <button data-tab="economia">Economía</button>
     <button data-tab="empresas">Empresas</button>
     <button data-tab="oscuro">Mercado oscuro</button>
     <button data-tab="gobierno">Gobierno</button>
     <button data-tab="ranking">Ranking</button>
-    <button id="salir" class="alt">Salir</button>
+    <button id="salir" class="salir">Salir</button>
   </nav>
 </header>
 
 <main>
   <!-- LOGIN -->
   <section id="login" class="login">
-    <h1>Entra en AMIGUITOS</h1>
-    <p class="muted">Inicia sesión con tu cuenta de Discord para jugar.</p>
-    <button class="btn" id="entrar">Iniciar sesión con Discord</button>
+    <div class="logo">AMI<span>GUITOS</span></div>
+    <p>Un sim económico para el servidor. Trabaja, funda empresas y llega a gobernador.</p>
+    <button class="btn" id="entrar">Entrar con Discord</button>
     <div class="aviso" id="avisoConfig">Antes de usarla, pon la URL y la clave de Supabase en el archivo index.html.</div>
   </section>
 
-  <!-- APP -->
   <div id="app" style="display:none">
-    <section id="economia" class="active">
-      <h2>Economía</h2><p class="sub">Trabaja, cobra y gasta. Todo pasa por el servidor.</p>
-      <div class="grid2">
-        <div class="panel">
-          <div class="muted">Saldo limpio</div>
-          <div class="balance" id="saldo">0</div>
-          <div class="muted" id="sucio" style="margin:4px 0 12px"></div>
-          <button class="btn" id="trabajar">Trabajar</button>
-          <div class="muted" id="cdTrabajar" style="margin-top:8px"></div>
+
+    <!-- INICIO -->
+    <section id="inicio" class="active">
+      <div class="hero">
+        <h1 id="saludo">Bienvenido a AMIGUITOS</h1>
+        <p>Trabaja, funda empresas, blanquea dinero y no te dejes pillar por el gobernador.</p>
+        <div class="stats">
+          <div class="stat"><b id="stJugadores">0</b><span>jugadores</span></div>
+          <div class="stat"><b id="stDia">1</b><span>día del juego</span></div>
+          <div class="stat"><b id="stSemana">1</b><span>semana</span></div>
         </div>
-        <div class="panel">
-          <div class="muted">Impuestos vigentes</div>
-          <div id="impuestos" style="margin-top:6px"></div>
-          <div class="muted" style="margin-top:10px">Auditoría: <span id="aud"></span>%</div>
+      </div>
+      <div class="grid two">
+        <div class="card">
+          <h3>📰 Noticias del servidor</h3>
+          <div class="news" id="noticias"></div>
+        </div>
+        <div class="card">
+          <h3>📜 Cómo se juega</h3>
+          <div class="muted" style="line-height:1.7">
+            • <b>Trabajar</b> cada 20 min te da saldo limpio.<br>
+            • <b>Fundar empresas</b> para que produzcan cada día.<br>
+            • Una <b>semana</b> es una elección: vota al gobernador.<br>
+            • El gobernador sube o baja <b>impuestos</b> una vez por semana.<br>
+            • El <b>mercado oscuro</b> da dinero sucio. Si lo blanqueas, puede caer una <b>auditoría</b>.
+          </div>
         </div>
       </div>
     </section>
 
+    <!-- ECONOMÍA -->
+    <section id="economia">
+      <h2>Economía</h2>
+      <p class="sub">Tu dinero y los impuestos vigentes. Todo lo calcula el servidor.</p>
+      <div class="grid two">
+        <div class="card">
+          <div class="label">Saldo limpio</div>
+          <div class="big" id="saldo">0 🪙</div>
+          <div class="muted" id="sucio"></div>
+          <button class="btn" id="trabajar" style="margin-top:14px">💼 Trabajar</button>
+          <div class="muted" id="cdTrabajar" style="margin-top:8px"></div>
+        </div>
+        <div class="card">
+          <div class="label">Impuestos vigentes</div>
+          <div class="chips" id="impuestos" style="margin:12px 0"></div>
+          <div class="muted">Auditoría: <b id="aud"></b>%</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- EMPRESAS -->
     <section id="empresas">
-      <h2>Empresas</h2><p class="sub">Fundar cuesta 500. Producen cada día.</p>
-      <div class="panel">
+      <h2>Empresas</h2>
+      <p class="sub">Fundar cuesta 500. Cada empresa produce cada día según su nivel.</p>
+      <div class="card" style="margin-bottom:16px">
         <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center">
-          <input id="nombreEmp" placeholder="Nombre" maxlength="30">
+          <input id="nombreEmp" placeholder="Nombre de la empresa" maxlength="30">
           <select id="sectorEmp"></select>
           <button class="btn" id="fundar">Fundar (500)</button>
         </div>
       </div>
-      <div id="listaEmp"></div>
+      <div class="grid" id="listaEmp"></div>
     </section>
 
-    <section id="oscuro" class="dark">
-      <div class="panel dark" style="padding:20px">
+    <!-- MERCADO OSCURO -->
+    <section id="oscuro">
+      <div class="dark-wrap">
         <h2>&gt; MERCADO_OSCURO</h2>
         <p class="muted">Ficción dentro del juego.</p>
-        <div class="grid2">
+        <div class="grid two" style="margin-top:14px">
           <div>
             <div class="muted">Dinero sucio</div>
-            <div class="neon" id="sucioGrande">0</div>
-            <button class="btn" id="trabajoSucio" style="margin-top:10px">Trabajo sucio</button>
+            <div class="neon" id="sucioGrande">0 💰</div>
+            <button class="btn" id="trabajoSucio">Trabajo sucio</button>
             <div class="muted" id="cdSucio" style="margin-top:8px"></div>
           </div>
           <div>
@@ -120,32 +252,36 @@
             <div class="muted" style="margin-top:8px">Tarda 5 días y pierdes el 30 %. Si te pillan, pierdes lo que lavabas.</div>
           </div>
         </div>
-        <div style="margin-top:16px">
-          <div class="row"><div><strong>Abogado de confianza</strong><div class="muted">Reduce a la mitad el riesgo 7 días. 300</div></div><button class="btn alt" id="escudo">Contratar</button></div>
+        <div style="margin-top:18px">
+          <div class="row"><div><strong>Abogado de confianza</strong><div class="muted">Reduce a la mitad el riesgo de auditoría 7 días. Coste 300.</div></div><button class="btn alt" id="escudo">Contratar</button></div>
           <div class="row"><div><strong>Compra de votos</strong><div class="muted">Disponible cuando haya más jugadores.</div></div><button class="btn alt" disabled>Próximamente</button></div>
         </div>
       </div>
     </section>
 
+    <!-- GOBIERNO -->
     <section id="gobierno">
-      <h2>Gobierno</h2><p class="sub">Una elección cada semana. Solo cuentan los votos de jugadores.</p>
-      <div class="grid2">
-        <div class="panel">
-          <div class="muted">Gobernador</div>
-          <div style="font-size:22px; font-weight:800; margin:4px 0 10px" id="govNombre"></div>
+      <h2>Gobierno</h2>
+      <p class="sub">Una elección cada semana. Solo cuentan los votos de jugadores.</p>
+      <div class="grid two">
+        <div class="card">
+          <div class="label">Gobernador</div>
+          <div style="font-size:24px; font-weight:800; margin:6px 0 12px" id="govNombre"></div>
           <div id="ajustes"></div>
         </div>
-        <div class="panel">
-          <div class="muted">Candidatos de esta semana</div>
-          <div id="candidatos" style="margin-top:6px"></div>
-          <button class="btn alt" id="presentarme" style="margin-top:10px">Presentarme (200)</button>
+        <div class="card">
+          <div class="label">Candidatos de esta semana</div>
+          <div id="candidatos" style="margin:10px 0"></div>
+          <button class="btn alt" id="presentarme">Presentarme (200)</button>
         </div>
       </div>
     </section>
 
+    <!-- RANKING -->
     <section id="ranking">
-      <h2>Ranking</h2><p class="sub">Saldo limpio de los jugadores.</p>
-      <div class="panel" id="listaRanking"></div>
+      <h2>Ranking</h2>
+      <p class="sub">Saldo limpio de los jugadores.</p>
+      <div class="card" id="listaRanking"></div>
     </section>
   </div>
 </main>
@@ -155,9 +291,17 @@
 // ============ Base ============
 const sb = (window.supabase && SUPABASE_URL.startsWith('http')) ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 const SECTORES = ['Panadería', 'Tecnología', 'Bar', 'Tienda de memes', 'Taller'];
+
+// Noticias del servidor: edítalas aquí. Son ficticias.
+const NOTICIAS = [
+  { fecha: 'Semana 1', titulo: 'Abre AMIGUITOS', texto: 'El servidor estrena sim económico. Que gane el mejor estafador.' },
+  { fecha: 'Hoy', titulo: 'Se buscan candidatos', texto: 'La primera elección de gobernador empieza esta semana. Presentarse cuesta 200.' },
+  { fecha: 'Rumor', titulo: 'Dicen que el abogado conoce a todo el mundo', texto: 'Nadie quiere confirmar cuánto cobra por tapar una auditoría.' }
+];
+
 const $ = id => document.getElementById(id);
 const fmt = n => Math.round(Number(n) || 0).toLocaleString('es-ES');
-let S = { uid: null, perfil: null, gob: null, dia: 1, mes: 1, candidatos: [] };
+let S = { uid: null, perfil: null, gob: null, dia: 1, mes: 1, candidatos: [], jugadores: 0 };
 
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2800); }
 function tiempo(seg) { return seg >= 3600 ? Math.ceil(seg / 3600) + ' h' : Math.ceil(seg / 60) + ' min'; }
@@ -191,13 +335,15 @@ async function cargar() {
   S.uid = session.user.id;
 
   try { await llamar('ponerse_al_dia'); } catch (e) {}
-  const [perfil, gob, dia] = await Promise.all([
+  const [perfil, gob, dia, jug] = await Promise.all([
     sb.from('perfiles').select('*').eq('id', S.uid).single(),
     sb.from('gobierno').select('*').eq('id', 1).single(),
-    sb.rpc('dia_actual')
+    sb.rpc('dia_actual'),
+    sb.from('ranking').select('nombre', { count: 'exact', head: true })
   ]);
   S.perfil = perfil.data; S.gob = gob.data; S.dia = dia.data || 1;
   S.mes = Math.floor((S.dia - 1) / 7) + 1;
+  S.jugadores = jug.count || 0;
   const cands = await sb.from('candidatos').select('candidato, nombre, plat').eq('mes', S.mes);
   S.candidatos = cands.data || [];
   render();
@@ -206,15 +352,22 @@ async function cargar() {
 // ============ Render ============
 function render() {
   if (!S.perfil) return;
-  const p = S.perfil, g = S.gob;
-  $('diaTxt').textContent = '· Día ' + S.dia + ' · Semana ' + S.mes;
+  const p = S.perfil, g = S.gob, imp = g.impuestos;
+
+  // Cabecera e inicio
+  $('diaTxt').textContent = 'Día ' + S.dia + ' · Semana ' + S.mes;
+  $('saludo').textContent = 'Hola, ' + (p.nombre || 'jugador') + ' 👋';
+  $('stJugadores').textContent = S.jugadores;
+  $('stDia').textContent = S.dia;
+  $('stSemana').textContent = S.mes;
+  $('noticias').innerHTML = NOTICIAS.map(n => `
+    <div class="new"><small>${n.fecha}</small><div><strong>${n.titulo}</strong></div><p class="muted">${n.texto}</p></div>`).join('');
 
   // Economía
   $('saldo').textContent = fmt(p.saldo) + ' 🪙';
   $('sucio').textContent = 'Dinero sucio: ' + fmt(p.sucio) + ' 💰';
   $('sucioGrande').textContent = fmt(p.sucio) + ' 💰';
-  const imp = g.impuestos;
-  $('impuestos').innerHTML = `Renta ${imp.renta}% · Sociedades ${imp.sociedades}% · IVA ${imp.iva}%`;
+  $('impuestos').innerHTML = `<span class="chip">Renta ${imp.renta}%</span><span class="chip">Sociedades ${imp.sociedades}%</span><span class="chip">IVA ${imp.iva}%</span>`;
   $('aud').textContent = g.auditoria;
   const cdT = 20 * 60 * 1000 - (Date.now() - new Date(p.ultimo_trabajo).getTime());
   $('trabajar').disabled = cdT > 0;
@@ -226,28 +379,28 @@ function render() {
   // Empresas
   $('sectorEmp').innerHTML = SECTORES.map(s => `<option>${s}</option>`).join('');
   $('listaEmp').innerHTML = (p.empresas || []).map(e => `
-    <div class="panel">
-      <div><strong>${e.nombre}</strong> <span class="muted">· ${e.sector}</span></div>
-      <div class="muted">Nivel ${e.nivel} · ${e.maq ? '✅ maquinaria' : '⬜ maquinaria (350)'} · ${e.contable ? '✅ contabilidad' : '⬜ contabilidad (250)'} · ${e.ilegal ? '<span class="bad">ilegal</span>' : ''}</div>
-      <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:10px">
+    <div class="card">
+      <h3>${e.nombre} <span class="muted">· ${e.sector}</span></h3>
+      <div class="muted" style="margin:6px 0 12px">Nivel ${e.nivel} · ${e.maq ? '✅ maquinaria' : '⬜ maquinaria (350)'} · ${e.contable ? '✅ contabilidad' : '⬜ contabilidad (250)'} ${e.ilegal ? ' · <span class="bad">ilegal</span>' : ''}</div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap">
         <button class="btn alt" onclick="accion('mejorar', {p_empresa:'${e.id}', p_tipo:'nivel'}, 'Nivel subido')">Subir nivel (${300 * e.nivel})</button>
         ${e.maq ? '' : `<button class="btn alt" onclick="accion('mejorar', {p_empresa:'${e.id}', p_tipo:'maq'}, 'Maquinaria instalada')">Maquinaria</button>`}
         ${e.contable ? '' : `<button class="btn alt" onclick="accion('mejorar', {p_empresa:'${e.id}', p_tipo:'contable'}, 'Contabilidad instalada')">Contabilidad</button>`}
       </div>
-    </div>`).join('') || '<div class="muted">Todavía no tienes empresas.</div>';
+    </div>`).join('') || '<div class="muted">Todavía no tienes empresas. Funda una arriba.</div>';
 
   // Gobierno
   const soyGob = g.gobernador === S.uid;
-  $('govNombre').textContent = g.gobernador_nombre + (soyGob ? ' · ¡Eres tú!' : '');
+  $('govNombre').textContent = g.gobernador_nombre + (soyGob ? ' · ¡Eres tú! 👑' : '');
   $('ajustes').innerHTML = soyGob
-    ? `<div class="muted">Como gobernador puedes cambiar impuestos una vez por semana.</div>
+    ? `<div class="muted">Puedes cambiar impuestos una vez por semana.</div>
        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:10px">
-         ${['renta','sociedades','iva'].map(t => `<input type="number" min="0" max="40" value="${imp[t]}" id="imp-${t}" style="width:90px" title="${t}">`).join('')}
+         ${['renta','sociedades','iva'].map(t => `<input type="number" min="0" max="40" value="${imp[t]}" id="imp-${t}" style="width:100px" title="${t}">`).join('')}
          <button class="btn alt" onclick="cambiarImpuestos()">Aplicar</button>
        </div>
-       <div style="display:flex; gap:6px; align-items:center; margin-top:10px">
+       <div style="display:flex; gap:6px; align-items:center; margin-top:12px; flex-wrap:wrap">
          <span class="muted">Auditoría %</span>
-         <input type="number" min="0" max="30" value="${g.auditoria}" id="aud-input" style="width:90px">
+         <input type="number" min="0" max="30" value="${g.auditoria}" id="aud-input" style="width:100px">
          <button class="btn alt" onclick="accion('cambiar_auditoria', {p_valor: +$('aud-input').value}, 'Auditoría fijada')">Fijar</button>
        </div>`
     : '<div class="muted">Los impuestos los fija el gobernador.</div>';
@@ -270,7 +423,8 @@ async function cambiarImpuestos() {
 // ============ Ranking ============
 async function cargarRanking() {
   const { data } = await sb.from('ranking').select('nombre, saldo');
-  $('listaRanking').innerHTML = (data || []).map((r, i) => `<div class="row"><span>${i + 1}. ${r.nombre}</span><strong>${fmt(r.saldo)}</strong></div>`).join('') || '<div class="muted">Sin datos.</div>';
+  $('listaRanking').innerHTML = (data || []).map((r, i) => `
+    <div class="row"><span>${['🥇','🥈','🥉'][i] || (i + 1) + '.'} ${r.nombre}</span><strong style="color:var(--gold)">${fmt(r.saldo)} 🪙</strong></div>`).join('') || '<div class="muted">Sin datos.</div>';
 }
 
 // ============ Eventos ============
@@ -278,6 +432,7 @@ document.querySelectorAll('nav button[data-tab]').forEach(b => b.onclick = () =>
   document.querySelectorAll('section').forEach(s => s.classList.toggle('active', s.id === b.dataset.tab));
   document.querySelectorAll('nav button[data-tab]').forEach(x => x.classList.toggle('active', x === b));
   if (b.dataset.tab === 'ranking') cargarRanking();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 $('entrar').onclick = entrar;
 $('salir').onclick = salir;
