@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AMIGUITOS · Sim económico</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root { --bg:#1e1f25; --panel:#2a2c35; --panel2:#33363f; --text:#f2f3f5; --muted:#a3a7b3; --accent:#ff7a59; --accent2:#7c83ff; --gold:#ffd166; --ok:#57f287; --bad:#ff5c5c; --neon:#49f2a0; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+  header { display:flex; align-items:center; justify-content:space-between; padding:14px 22px; position:sticky; top:0; background:rgba(30,31,37,.92); z-index:10; border-bottom:1px solid #ffffff10; flex-wrap:wrap; gap:8px; }
+  .brand { font-weight:800; font-size:20px; } .brand span { color:var(--accent); }
+  nav { display:flex; gap:4px; flex-wrap:wrap; }
+  nav button { background:none; border:0; color:var(--muted); font:inherit; padding:8px 12px; border-radius:10px; cursor:pointer; }
+  nav button.active, nav button:hover { color:var(--text); background:var(--panel2); }
+  main { max-width:1080px; margin:0 auto; padding:24px 18px 80px; }
+  section { display:none; } section.active { display:block; }
+  h2 { margin:0 0 4px; } .sub { color:var(--muted); margin:0 0 16px; font-size:14px; }
+  .panel { background:var(--panel); border:1px solid #ffffff10; border-radius:18px; padding:18px; margin-bottom:14px; }
+  .grid2 { display:grid; gap:14px; grid-template-columns:1fr 1fr; } @media (max-width:760px) { .grid2 { grid-template-columns:1fr; } }
+  .balance { font-size:38px; font-weight:800; color:var(--gold); }
+  .neon { color:var(--neon); font-size:30px; font-weight:800; }
+  .row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px solid #ffffff0d; flex-wrap:wrap; }
+  .row:last-child { border-bottom:0; }
+  .muted { color:var(--muted); font-size:14px; }
+  .btn { display:inline-flex; align-items:center; gap:6px; border:0; border-radius:12px; padding:10px 15px; font:inherit; font-weight:700; cursor:pointer; background:var(--accent); color:#1b1b1b; }
+  .btn.alt { background:var(--panel2); color:var(--text); }
+  .btn.neon { background:var(--neon); color:#031a10; }
+  .btn:disabled { opacity:.45; cursor:not-allowed; }
+  input, select { background:var(--panel2); border:1px solid #ffffff14; color:var(--text); padding:9px 11px; border-radius:10px; font:inherit; }
+  .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--panel2); padding:12px 18px; border-radius:12px; opacity:0; transition:opacity .25s; pointer-events:none; z-index:20; max-width:90vw; }
+  .toast.show { opacity:1; }
+  .bad { color:var(--bad); } .ok { color:var(--ok); }
+  .login { max-width:480px; margin:60px auto; text-align:center; }
+  .login h1 { font-size:34px; margin:0 0 8px; }
+  .aviso { background:#7c83ff1a; border:1px dashed #7c83ff66; color:var(--muted); padding:12px 14px; border-radius:12px; font-size:13px; line-height:1.5; margin-top:14px; }
+  .dark { background:#0d0f0e; border:1px solid #49f2a044; color:#c9f7e3; font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .dark h2 { color:var(--neon); }
+</style>
+</head>
+<body>
+
+<!-- Configuración: pega aquí la URL y la clave anon de tu proyecto de Supabase -->
+<script>
+  const SUPABASE_URL = 'PEGA_AQUI_LA_URL_DEL_PROYECTO';
+  const SUPABASE_ANON_KEY = 'PEGA_AQUI_LA_CLAVE_ANON';
+</script>
+
+<header>
+  <div class="brand">AMI<span>GUITOS</span> <span class="muted" id="diaTxt"></span></div>
+  <nav id="tabs" style="display:none">
+    <button data-tab="economia" class="active">Economía</button>
+    <button data-tab="empresas">Empresas</button>
+    <button data-tab="oscuro">Mercado oscuro</button>
+    <button data-tab="gobierno">Gobierno</button>
+    <button data-tab="ranking">Ranking</button>
+    <button id="salir" class="alt">Salir</button>
+  </nav>
+</header>
+
+<main>
+  <!-- LOGIN -->
+  <section id="login" class="login">
+    <h1>Entra en AMIGUITOS</h1>
+    <p class="muted">Inicia sesión con tu cuenta de Discord para jugar.</p>
+    <button class="btn" id="entrar">Iniciar sesión con Discord</button>
+    <div class="aviso" id="avisoConfig">Antes de usarla, pon la URL y la clave de Supabase en el archivo index.html.</div>
+  </section>
+
+  <!-- APP -->
+  <div id="app" style="display:none">
+    <section id="economia" class="active">
+      <h2>Economía</h2><p class="sub">Trabaja, cobra y gasta. Todo pasa por el servidor.</p>
+      <div class="grid2">
+        <div class="panel">
+          <div class="muted">Saldo limpio</div>
+          <div class="balance" id="saldo">0</div>
+          <div class="muted" id="sucio" style="margin:4px 0 12px"></div>
+          <button class="btn" id="trabajar">Trabajar</button>
+          <div class="muted" id="cdTrabajar" style="margin-top:8px"></div>
+        </div>
+        <div class="panel">
+          <div class="muted">Impuestos vigentes</div>
+          <div id="impuestos" style="margin-top:6px"></div>
+          <div class="muted" style="margin-top:10px">Auditoría: <span id="aud"></span>%</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="empresas">
+      <h2>Empresas</h2><p class="sub">Fundar cuesta 500. Producen cada día.</p>
+      <div class="panel">
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center">
+          <input id="nombreEmp" placeholder="Nombre" maxlength="30">
+          <select id="sectorEmp"></select>
+          <button class="btn" id="fundar">Fundar (500)</button>
+        </div>
+      </div>
+      <div id="listaEmp"></div>
+    </section>
+
+    <section id="oscuro" class="dark">
+      <div class="panel dark" style="padding:20px">
+        <h2>&gt; MERCADO_OSCURO</h2>
+        <p class="muted">Ficción dentro del juego.</p>
+        <div class="grid2">
+          <div>
+            <div class="muted">Dinero sucio</div>
+            <div class="neon" id="sucioGrande">0</div>
+            <button class="btn" id="trabajoSucio" style="margin-top:10px">Trabajo sucio</button>
+            <div class="muted" id="cdSucio" style="margin-top:8px"></div>
+          </div>
+          <div>
+            <div class="muted">Blanquear</div>
+            <div style="display:flex; gap:8px; margin-top:6px; flex-wrap:wrap">
+              <input id="montoLavar" type="number" min="1" placeholder="Cantidad" style="width:140px">
+              <button class="btn neon" id="lavar">Lavar</button>
+            </div>
+            <div class="muted" style="margin-top:8px">Tarda 5 días y pierdes el 30 %. Si te pillan, pierdes lo que lavabas.</div>
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <div class="row"><div><strong>Abogado de confianza</strong><div class="muted">Reduce a la mitad el riesgo 7 días. 300</div></div><button class="btn alt" id="escudo">Contratar</button></div>
+          <div class="row"><div><strong>Compra de votos</strong><div class="muted">Disponible cuando haya más jugadores.</div></div><button class="btn alt" disabled>Próximamente</button></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="gobierno">
+      <h2>Gobierno</h2><p class="sub">Una elección cada semana. Solo cuentan los votos de jugadores.</p>
+      <div class="grid2">
+        <div class="panel">
+          <div class="muted">Gobernador</div>
+          <div style="font-size:22px; font-weight:800; margin:4px 0 10px" id="govNombre"></div>
+          <div id="ajustes"></div>
+        </div>
+        <div class="panel">
+          <div class="muted">Candidatos de esta semana</div>
+          <div id="candidatos" style="margin-top:6px"></div>
+          <button class="btn alt" id="presentarme" style="margin-top:10px">Presentarme (200)</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="ranking">
+      <h2>Ranking</h2><p class="sub">Saldo limpio de los jugadores.</p>
+      <div class="panel" id="listaRanking"></div>
+    </section>
+  </div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+// ============ Base ============
+const sb = (window.supabase && SUPABASE_URL.startsWith('http')) ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+const SECTORES = ['Panadería', 'Tecnología', 'Bar', 'Tienda de memes', 'Taller'];
+const $ = id => document.getElementById(id);
+const fmt = n => Math.round(Number(n) || 0).toLocaleString('es-ES');
+let S = { uid: null, perfil: null, gob: null, dia: 1, mes: 1, candidatos: [] };
+
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2800); }
+function tiempo(seg) { return seg >= 3600 ? Math.ceil(seg / 3600) + ' h' : Math.ceil(seg / 60) + ' min'; }
+
+// ============ Sesión ============
+async function entrar() {
+  if (!sb) return toast('Falta configurar Supabase en index.html');
+  await sb.auth.signInWithOAuth({ provider: 'discord', options: { redirectTo: location.origin + location.pathname } });
+}
+async function salir() { if (sb) await sb.auth.signOut(); location.reload(); }
+
+// ============ Llamadas al servidor ============
+async function llamar(nombre, args) {
+  const { data, error } = await sb.rpc(nombre, args || {});
+  if (error) { toast(error.message.replace(/^ERROR:\s*/, '')); throw error; }
+  return data;
+}
+async function accion(nombre, args, msg) {
+  try { await llamar(nombre, args); if (msg) toast(msg); await cargar(); } catch (e) {}
+}
+
+// ============ Carga de datos ============
+async function cargar() {
+  if (!sb) return;
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    $('login').style.display = 'block'; $('app').style.display = 'none'; $('tabs').style.display = 'none';
+    return;
+  }
+  $('login').style.display = 'none'; $('app').style.display = 'block'; $('tabs').style.display = 'flex';
+  S.uid = session.user.id;
+
+  try { await llamar('ponerse_al_dia'); } catch (e) {}
+  const [perfil, gob, dia] = await Promise.all([
+    sb.from('perfiles').select('*').eq('id', S.uid).single(),
+    sb.from('gobierno').select('*').eq('id', 1).single(),
+    sb.rpc('dia_actual')
+  ]);
+  S.perfil = perfil.data; S.gob = gob.data; S.dia = dia.data || 1;
+  S.mes = Math.floor((S.dia - 1) / 7) + 1;
+  const cands = await sb.from('candidatos').select('candidato, nombre, plat').eq('mes', S.mes);
+  S.candidatos = cands.data || [];
+  render();
+}
+
+// ============ Render ============
+function render() {
+  if (!S.perfil) return;
+  const p = S.perfil, g = S.gob;
+  $('diaTxt').textContent = '· Día ' + S.dia + ' · Semana ' + S.mes;
+
+  // Economía
+  $('saldo').textContent = fmt(p.saldo) + ' 🪙';
+  $('sucio').textContent = 'Dinero sucio: ' + fmt(p.sucio) + ' 💰';
+  $('sucioGrande').textContent = fmt(p.sucio) + ' 💰';
+  const imp = g.impuestos;
+  $('impuestos').innerHTML = `Renta ${imp.renta}% · Sociedades ${imp.sociedades}% · IVA ${imp.iva}%`;
+  $('aud').textContent = g.auditoria;
+  const cdT = 20 * 60 * 1000 - (Date.now() - new Date(p.ultimo_trabajo).getTime());
+  $('trabajar').disabled = cdT > 0;
+  $('cdTrabajar').textContent = cdT > 0 ? 'Disponible en ' + tiempo(cdT / 1000) : 'Listo para trabajar';
+  const cdS = 30 * 60 * 1000 - (Date.now() - new Date(p.ultimo_trabajo_sucio).getTime());
+  $('trabajoSucio').disabled = cdS > 0;
+  $('cdSucio').textContent = cdS > 0 ? 'Disponible en ' + tiempo(cdS / 1000) : 'Listo';
+
+  // Empresas
+  $('sectorEmp').innerHTML = SECTORES.map(s => `<option>${s}</option>`).join('');
+  $('listaEmp').innerHTML = (p.empresas || []).map(e => `
+    <div class="panel">
+      <div><strong>${e.nombre}</strong> <span class="muted">· ${e.sector}</span></div>
+      <div class="muted">Nivel ${e.nivel} · ${e.maq ? '✅ maquinaria' : '⬜ maquinaria (350)'} · ${e.contable ? '✅ contabilidad' : '⬜ contabilidad (250)'} · ${e.ilegal ? '<span class="bad">ilegal</span>' : ''}</div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:10px">
+        <button class="btn alt" onclick="accion('mejorar', {p_empresa:'${e.id}', p_tipo:'nivel'}, 'Nivel subido')">Subir nivel (${300 * e.nivel})</button>
+        ${e.maq ? '' : `<button class="btn alt" onclick="accion('mejorar', {p_empresa:'${e.id}', p_tipo:'maq'}, 'Maquinaria instalada')">Maquinaria</button>`}
+        ${e.contable ? '' : `<button class="btn alt" onclick="accion('mejorar', {p_empresa:'${e.id}', p_tipo:'contable'}, 'Contabilidad instalada')">Contabilidad</button>`}
+      </div>
+    </div>`).join('') || '<div class="muted">Todavía no tienes empresas.</div>';
+
+  // Gobierno
+  const soyGob = g.gobernador === S.uid;
+  $('govNombre').textContent = g.gobernador_nombre + (soyGob ? ' · ¡Eres tú!' : '');
+  $('ajustes').innerHTML = soyGob
+    ? `<div class="muted">Como gobernador puedes cambiar impuestos una vez por semana.</div>
+       <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:10px">
+         ${['renta','sociedades','iva'].map(t => `<input type="number" min="0" max="40" value="${imp[t]}" id="imp-${t}" style="width:90px" title="${t}">`).join('')}
+         <button class="btn alt" onclick="cambiarImpuestos()">Aplicar</button>
+       </div>
+       <div style="display:flex; gap:6px; align-items:center; margin-top:10px">
+         <span class="muted">Auditoría %</span>
+         <input type="number" min="0" max="30" value="${g.auditoria}" id="aud-input" style="width:90px">
+         <button class="btn alt" onclick="accion('cambiar_auditoria', {p_valor: +$('aud-input').value}, 'Auditoría fijada')">Fijar</button>
+       </div>`
+    : '<div class="muted">Los impuestos los fija el gobernador.</div>';
+  $('candidatos').innerHTML = S.candidatos.length
+    ? S.candidatos.map(c => `
+        <div class="row"><div><strong>${c.nombre}</strong><div class="muted">Renta ${c.plat.renta}% · Sociedades ${c.plat.sociedades}% · IVA ${c.plat.iva}%</div></div>
+        <button class="btn alt" onclick="accion('votar', {p_candidato:'${c.candidato}'}, 'Voto registrado')">Votar</button></div>`).join('')
+    : '<div class="muted">Nadie se ha presentado esta semana.</div>';
+  $('presentarme').disabled = S.candidatos.some(c => c.candidato === S.uid);
+}
+
+async function cambiarImpuestos() {
+  for (const t of ['renta', 'sociedades', 'iva']) {
+    const v = +$('imp-' + t).value;
+    try { await llamar('cambiar_impuesto', { p_tipo: t, p_valor: v }); } catch (e) { return; }
+  }
+  toast('Impuestos actualizados'); await cargar();
+}
+
+// ============ Ranking ============
+async function cargarRanking() {
+  const { data } = await sb.from('ranking').select('nombre, saldo');
+  $('listaRanking').innerHTML = (data || []).map((r, i) => `<div class="row"><span>${i + 1}. ${r.nombre}</span><strong>${fmt(r.saldo)}</strong></div>`).join('') || '<div class="muted">Sin datos.</div>';
+}
+
+// ============ Eventos ============
+document.querySelectorAll('nav button[data-tab]').forEach(b => b.onclick = () => {
+  document.querySelectorAll('section').forEach(s => s.classList.toggle('active', s.id === b.dataset.tab));
+  document.querySelectorAll('nav button[data-tab]').forEach(x => x.classList.toggle('active', x === b));
+  if (b.dataset.tab === 'ranking') cargarRanking();
+});
+$('entrar').onclick = entrar;
+$('salir').onclick = salir;
+$('trabajar').onclick = () => accion('trabajar', {}, 'Trabajo hecho');
+$('trabajoSucio').onclick = () => accion('trabajo_sucio', {}, 'Trabajo sucio hecho');
+$('lavar').onclick = () => accion('lavar', { monto: +$('montoLavar').value }, 'Blanqueo en marcha');
+$('escudo').onclick = () => accion('comprar_oscuro', { p_item: 'escudo' }, 'Abogado contratado');
+$('fundar').onclick = () => accion('fundar', { p_nombre: $('nombreEmp').value.trim(), p_sector: $('sectorEmp').value }, 'Empresa fundada');
+$('presentarme').onclick = () => accion('presentarse', {}, 'Te has presentado');
+
+if (!sb) $('avisoConfig').textContent = 'Falta configurar Supabase: pega la URL y la clave en index.html.';
+cargar();
+setInterval(() => { if (S.perfil) render(); }, 15000);
+</script>
+</body>
+</html>
