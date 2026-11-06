@@ -16,6 +16,7 @@ const CARPETA = path.join(__dirname, 'musica');
 const EXTENSIONES = ['.mp3', '.ogg', '.wav', '.m4a'];
 const TTS_CMD = process.env.TTS_CMD || 'espeak-ng';
 const TTS_VOZ = process.env.TTS_VOZ || 'es';
+const SONIDOS = path.join(__dirname, 'sonidos');
 
 const supabase = process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY
   ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY, { auth: { persistSession: false } })
@@ -40,7 +41,7 @@ const AYUDA = [
 function pistas() {
   return fs.readdirSync(CARPETA).filter(f => EXTENSIONES.includes(path.extname(f).toLowerCase()));
 }
-const nombreItem = x => (x.tipo === 'voz' ? '🗣️ voz' : x.nombre);
+const nombreItem = x => (x.tipo === 'voz' ? '🗣️ voz' : x.tipo === 'efecto' ? '🔊 ' + x.nombre : x.nombre);
 
 function estado(guildId) {
   if (!estados.has(guildId)) {
@@ -62,7 +63,7 @@ function siguiente(guildId) {
   const e = estados.get(guildId);
   if (!e || e.actual || e.cola.length === 0) return;
   e.actual = e.cola.shift();
-  const origen = e.actual.tipo === 'voz' ? e.actual.ruta : path.join(CARPETA, e.actual.nombre);
+  const origen = e.actual.ruta || path.join(CARPETA, e.actual.nombre);
   const recurso = createAudioResource(origen, { inlineVolume: true });
   recurso.volume?.setVolume(e.volumen);
   e.player.play(recurso);
@@ -136,8 +137,29 @@ async function vigilarVoz() {
       await supabase.from('voz_pendiente').update({ hecho: true }).eq('id', orden.id);
       await decirEnCanal(orden.texto);
     }
+    const { data: sons } = await supabase.from('sonido_pendiente').select('id, archivo').eq('hecho', false).order('id').limit(1);
+    const son = sons?.[0];
+    if (son) {
+      await supabase.from('sonido_pendiente').update({ hecho: true }).eq('id', son.id);
+      await sonarEfecto(son.archivo);
+    }
   } catch (err) { console.error('Voz:', err.message); }
   setTimeout(vigilarVoz, 2000);
+}
+
+// Reproduce un efecto de la carpeta sonidos, cortando lo que suene.
+async function sonarEfecto(archivo) {
+  if (!/^[a-z0-9_-]+\.wav$/.test(archivo) || !fs.existsSync(path.join(SONIDOS, archivo))) return;
+  const guild = client.guilds.cache.get(process.env.GUILD_ID) || client.guilds.cache.first();
+  if (!guild) return;
+  const e = estado(guild.id);
+  if (!e.conexion) {
+    if (!process.env.VOZ_CANAL_ID) { console.error('Falta VOZ_CANAL_ID en .env'); return; }
+    await unirse(guild, process.env.VOZ_CANAL_ID, e);
+  }
+  e.cola.unshift({ tipo: 'efecto', nombre: archivo, ruta: path.join(SONIDOS, archivo) });
+  e.player.stop(true);
+  siguiente(guild.id);
 }
 
 async function ejecutar(cmd, i, e) {

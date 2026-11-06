@@ -156,6 +156,7 @@
     <button data-tab="chat">Chat</button>
     <button data-tab="ranking">Ranking</button>
     <button data-tab="voz" id="tabVoz" style="display:none">Voz</button>
+    <button data-tab="sonidos" id="tabSonidos" style="display:none">Sonidos</button>
     <button id="salir" class="salir">Salir</button>
   </nav>
 </header>
@@ -307,6 +308,13 @@
       </div>
     </section>
 
+    <!-- SONIDOS (solo dueño) -->
+    <section id="sonidos">
+      <h2>Sonidos</h2>
+      <p class="sub">Pulsa uno y el bot lo suena en su canal de voz.</p>
+      <div class="grid" id="botonesSonidos" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))"></div>
+    </section>
+
     <!-- RANKING -->
     <section id="ranking">
       <h2>Ranking</h2>
@@ -378,6 +386,7 @@ async function cargar() {
   S.candidatos = cands.data || [];
   const { data: dueno } = await sb.rpc('soy_dueno');
   $('tabVoz').style.display = dueno ? '' : 'none';
+  $('tabSonidos').style.display = dueno ? '' : 'none';
   render();
 }
 
@@ -492,6 +501,13 @@ $('enviarVoz').onclick = async () => {
   if (error) return toast(error.message.replace(/^ERROR:\s*/, ''));
   $('textoVoz').value = ''; toast('Enviado al canal de voz');
 };
+const SONIDOS = ["bip", "bocina", "boing", "bombo", "campanita", "chispa", "cuerno", "ding", "error", "exito", "explosion", "fanfarria", "golpe", "gong", "grillo", "laser", "muelle", "pato", "platillo", "radar", "raton", "redoble", "sirena", "sonar", "tambor", "telefono", "tic", "tuturu", "vaso", "zumbido"];
+$('botonesSonidos').innerHTML = SONIDOS.map(n => `<button class="btn alt" onclick="sonar('${n}')">🔊 ${n}</button>`).join('');
+async function sonar(nombre) {
+  const { error } = await sb.rpc('pedir_sonido', { p_archivo: nombre + '.wav' });
+  if (error) return toast(error.message.replace(/^ERROR:\s*/, ''));
+  toast('🔊 ' + nombre);
+}
 $('presentarme').onclick = () => accion('presentarse', {}, 'Te has presentado');
 
 if (!sb) $('avisoConfig').textContent = 'Falta configurar Supabase: pega la URL y la clave en index.html.';
