@@ -381,7 +381,7 @@ begin
   if g.gobernador is distinct from auth.uid() then raise exception 'Solo el gobernador puede cambiar impuestos'; end if;
   if g.cambios_mes >= 1 then raise exception 'Solo un cambio de impuestos al mes'; end if;
   if p_tipo not in ('renta', 'sociedades', 'iva') then raise exception 'Impuesto no válido'; end if;
-  if p_valor < 0 or p_valor > 40 then raise exception 'Entre 0 y 40 %'; end if;
+  if p_valor < 0 or p_valor > 40 then raise exception 'Entre 0 y 40 por ciento'; end if;
   update public.gobierno
      set impuestos = jsonb_set(impuestos, array[p_tipo], to_jsonb(p_valor)),
          cambios_mes = cambios_mes + 1
@@ -395,7 +395,7 @@ begin
   if (select gobernador from public.gobierno where id = 1) is distinct from auth.uid() then
     raise exception 'Solo el gobernador puede auditar';
   end if;
-  if p_valor < 0 or p_valor > 30 then raise exception 'Entre 0 y 30 %'; end if;
+  if p_valor < 0 or p_valor > 30 then raise exception 'Entre 0 y 30 por ciento'; end if;
   update public.gobierno set auditoria = p_valor where id = 1;
 end;
 $$;
