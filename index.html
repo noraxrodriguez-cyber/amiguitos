@@ -152,6 +152,7 @@
     <button data-tab="empresas">Empresas</button>
     <button data-tab="oscuro">Mercado oscuro</button>
     <button data-tab="gobierno">Gobierno</button>
+    <button data-tab="chat">Chat</button>
     <button data-tab="ranking">Ranking</button>
     <button id="salir" class="salir">Salir</button>
   </nav>
@@ -273,6 +274,23 @@
           <div class="label">Candidatos de esta semana</div>
           <div id="candidatos" style="margin:10px 0"></div>
           <button class="btn alt" id="presentarme">Presentarme (200)</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAT -->
+    <section id="chat">
+      <h2>Chat</h2>
+      <p class="sub">Ganas 1 moneda por cada mensaje que escribes en el servidor de Discord.</p>
+      <div class="grid two">
+        <div class="card">
+          <div class="label">Tus monedas de chat</div>
+          <div class="big" id="misMonedas">0 💬</div>
+          <div class="muted">Se actualizan cuando recargas la página.</div>
+        </div>
+        <div class="card">
+          <div class="label">Ranking del chat</div>
+          <div id="rankingChat" style="margin-top:10px"></div>
         </div>
       </div>
     </section>
@@ -427,11 +445,23 @@ async function cargarRanking() {
     <div class="row"><span>${['🥇','🥈','🥉'][i] || (i + 1) + '.'} ${r.nombre}</span><strong style="color:var(--gold)">${fmt(r.saldo)} 🪙</strong></div>`).join('') || '<div class="muted">Sin datos.</div>';
 }
 
+// ============ Chat ============
+async function cargarChat() {
+  const [mias, rank] = await Promise.all([
+    sb.rpc('mis_monedas_chat'),
+    sb.from('ranking_chat').select('nombre, monedas')
+  ]);
+  $('misMonedas').textContent = fmt(mias.data || 0) + ' 💬';
+  $('rankingChat').innerHTML = (rank.data || []).map((r, i) => `
+    <div class="row"><span>${['🥇','🥈','🥉'][i] || (i + 1) + '.'} ${r.nombre}</span><strong style="color:var(--gold)">${fmt(r.monedas)} 💬</strong></div>`).join('') || '<div class="muted">Nadie ha escrito todavía.</div>';
+}
+
 // ============ Eventos ============
 document.querySelectorAll('nav button[data-tab]').forEach(b => b.onclick = () => {
   document.querySelectorAll('section').forEach(s => s.classList.toggle('active', s.id === b.dataset.tab));
   document.querySelectorAll('nav button[data-tab]').forEach(x => x.classList.toggle('active', x === b));
   if (b.dataset.tab === 'ranking') cargarRanking();
+  if (b.dataset.tab === 'chat') cargarChat();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 $('entrar').onclick = entrar;

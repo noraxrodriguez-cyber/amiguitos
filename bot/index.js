@@ -2,6 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const { Client, GatewayIntentBits } = require('discord.js');
+const { createClient } = require('@supabase/supabase-js');
 const {
   joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus,
   VoiceConnectionStatus, entersState, NoSubscriberBehavior, getVoiceConnection
@@ -36,7 +37,13 @@ function siguiente(guildId) {
   e.player.play(createAudioResource(path.join(CARPETA, e.actual)));
 }
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates] });
+const supabase = process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY
+  ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY, { auth: { persistSession: false } })
+  : null;
+
+const client = new Client({
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates, GatewayIntentBits.GuildMessages]
+});
 client.once('ready', () => console.log('Conectado como ' + client.user.tag));
 
 client.on('interactionCreate', async i => {
@@ -79,6 +86,15 @@ client.on('interactionCreate', async i => {
     getVoiceConnection(i.guildId)?.destroy();
     return i.reply('⏹️ Parado. Me voy del canal.');
   }
+});
+
+// Una moneda por mensaje en el servidor (no cuenta bots ni otros servidores).
+client.on('messageCreate', async m => {
+  if (m.author.bot || !m.guildId || !supabase) return;
+  if (process.env.GUILD_ID && m.guildId !== process.env.GUILD_ID) return;
+  const nombre = m.member?.displayName || m.author.username;
+  const { error } = await supabase.rpc('sumar_moneda', { p_discord_id: m.author.id, p_nombre: nombre });
+  if (error) console.error('Error sumando moneda:', error.message);
 });
 
 client.login(process.env.DISCORD_TOKEN);
