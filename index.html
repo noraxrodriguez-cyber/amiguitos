@@ -93,11 +93,12 @@
   .btn.neon { background:var(--neon); color:#03170f; }
   .btn:disabled { opacity:.4; cursor:not-allowed; transform:none; }
 
-  input, select {
+  input, select, textarea {
     background:var(--bg2); border:1px solid var(--line); color:var(--text);
     padding:10px 12px; border-radius:12px; font:inherit; min-width:0;
   }
-  input:focus, select:focus { outline:2px solid #7c83ff66; }
+  input:focus, select:focus, textarea:focus { outline:2px solid #7c83ff66; }
+  textarea { width:100%; resize:vertical; font:inherit; }
 
   .chips { display:flex; gap:8px; flex-wrap:wrap; }
   .chip { background:var(--bg2); border:1px solid var(--line); border-radius:999px; padding:6px 12px; font-size:13px; color:var(--muted); }
@@ -154,6 +155,7 @@
     <button data-tab="gobierno">Gobierno</button>
     <button data-tab="chat">Chat</button>
     <button data-tab="ranking">Ranking</button>
+    <button data-tab="voz" id="tabVoz" style="display:none">Voz</button>
     <button id="salir" class="salir">Salir</button>
   </nav>
 </header>
@@ -295,6 +297,16 @@
       </div>
     </section>
 
+    <!-- VOZ (solo dueño) -->
+    <section id="voz">
+      <h2>Voz del bot</h2>
+      <p class="sub">Escribe aquí y el bot lo dice en su canal de voz.</p>
+      <div class="card">
+        <textarea id="textoVoz" maxlength="200" rows="3" placeholder="Lo que quieres que diga…"></textarea>
+        <button class="btn" id="enviarVoz" style="margin-top:12px">🗣️ Decir</button>
+      </div>
+    </section>
+
     <!-- RANKING -->
     <section id="ranking">
       <h2>Ranking</h2>
@@ -364,6 +376,8 @@ async function cargar() {
   S.jugadores = jug.count || 0;
   const cands = await sb.from('candidatos').select('candidato, nombre, plat').eq('mes', S.mes);
   S.candidatos = cands.data || [];
+  const { data: dueno } = await sb.rpc('soy_dueno');
+  $('tabVoz').style.display = dueno ? '' : 'none';
   render();
 }
 
@@ -471,6 +485,13 @@ $('trabajoSucio').onclick = () => accion('trabajo_sucio', {}, 'Trabajo sucio hec
 $('lavar').onclick = () => accion('lavar', { monto: +$('montoLavar').value }, 'Blanqueo en marcha');
 $('escudo').onclick = () => accion('comprar_oscuro', { p_item: 'escudo' }, 'Abogado contratado');
 $('fundar').onclick = () => accion('fundar', { p_nombre: $('nombreEmp').value.trim(), p_sector: $('sectorEmp').value }, 'Empresa fundada');
+$('enviarVoz').onclick = async () => {
+  const t = $('textoVoz').value.trim();
+  if (!t) return toast('Escribe algo primero');
+  const { error } = await sb.rpc('enviar_voz', { p_texto: t });
+  if (error) return toast(error.message.replace(/^ERROR:\s*/, ''));
+  $('textoVoz').value = ''; toast('Enviado al canal de voz');
+};
 $('presentarme').onclick = () => accion('presentarse', {}, 'Te has presentado');
 
 if (!sb) $('avisoConfig').textContent = 'Falta configurar Supabase: pega la URL y la clave en index.html.';

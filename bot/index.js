@@ -30,7 +30,7 @@ const AYUDA = [
   '**Voz**',
   '`/entrar` · me meto en tu canal y me quedo',
   '`/salir` · me salgo del canal',
-  '`/decir texto` · digo el texto en voz alta (`interrumpir:no` para esperar)',
+  '(La voz se manda desde la pestaña Voz de la web.)',
   '**Economía del chat**',
   '`/monedas` · tus monedas de chat · `/ranking` · top 10',
   '**Otros**',
@@ -111,6 +111,35 @@ function hablar(texto, ruta) {
   });
 }
 
+async function decirEnCanal(texto) {
+  const guild = client.guilds.cache.get(process.env.GUILD_ID) || client.guilds.cache.first();
+  if (!guild) return;
+  const e = estado(guild.id);
+  if (!e.conexion) {
+    if (!process.env.VOZ_CANAL_ID) { console.error('Falta VOZ_CANAL_ID en .env para hablar sin estar en un canal'); return; }
+    await unirse(guild, process.env.VOZ_CANAL_ID, e);
+  }
+  const ruta = path.join(os.tmpdir(), `voz-${Date.now()}.wav`);
+  await hablar(texto, ruta);
+  e.cola.unshift({ tipo: 'voz', ruta });
+  e.player.stop(true); // corta lo que suene y pasa a la voz
+  siguiente(guild.id);
+}
+
+// Revisa cada 2 s si la web ha enviado algún texto para decir.
+async function vigilarVoz() {
+  if (!supabase) return;
+  try {
+    const { data } = await supabase.from('voz_pendiente').select('id, texto').eq('hecho', false).order('id').limit(1);
+    const orden = data?.[0];
+    if (orden) {
+      await supabase.from('voz_pendiente').update({ hecho: true }).eq('id', orden.id);
+      await decirEnCanal(orden.texto);
+    }
+  } catch (err) { console.error('Voz:', err.message); }
+  setTimeout(vigilarVoz, 2000);
+}
+
 async function ejecutar(cmd, i, e) {
   switch (cmd) {
     case 'ayuda': return AYUDA;
@@ -137,18 +166,6 @@ async function ejecutar(cmd, i, e) {
       e.cola.push({ tipo: 'musica', nombre: pista });
       siguiente(i.guildId);
       return e.actual?.nombre === pista ? `▶️ Sonando: **${pista}**` : `🎶 En cola: **${pista}**`;
-    }
-
-    case 'decir': {
-      if (!(await asegurarVoz(i, e))) return 'Entra primero en un canal de voz.';
-      const texto = i.options.getString('texto').slice(0, 200);
-      const ruta = path.join(os.tmpdir(), `voz-${Date.now()}.wav`);
-      await hablar(texto, ruta);
-      const interrumpir = i.options.getBoolean('interrumpir') ?? true;
-      e.cola.unshift({ tipo: 'voz', ruta });
-      if (interrumpir && e.actual) e.player.stop(true);
-      siguiente(i.guildId);
-      return `🗣️ "${texto}"`;
     }
 
     case 'pausa': e.player.pause(); return '⏸️ Pausado.';
@@ -202,7 +219,7 @@ async function ejecutar(cmd, i, e) {
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates, GatewayIntentBits.GuildMessages]
 });
-client.once('ready', () => console.log('Conectado como ' + client.user.tag));
+client.once('ready', () => { console.log('Conectado como ' + client.user.tag); vigilarVoz(); });
 
 client.on('interactionCreate', async i => {
   if (i.isAutocomplete() && i.commandName === 'poner') {

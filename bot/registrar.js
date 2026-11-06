@@ -11,9 +11,6 @@ const comandos = [
   new SlashCommandBuilder().setName('salir').setDescription('Me salgo del canal de voz'),
   new SlashCommandBuilder().setName('poner').setDescription('Pone una pista de la carpeta musica')
     .addStringOption(o => o.setName('pista').setDescription('Nombre de la pista').setRequired(true).setAutocomplete(true)),
-  new SlashCommandBuilder().setName('decir').setDescription('Digo un texto en voz alta en el canal')
-    .addStringOption(o => o.setName('texto').setDescription('Lo que tengo que decir (máx. 200)').setRequired(true))
-    .addBooleanOption(o => o.setName('interrumpir').setDescription('Cortar lo que suene ahora (por defecto sí)')),
   new SlashCommandBuilder().setName('pausa').setDescription('Pausa la música'),
   new SlashCommandBuilder().setName('seguir').setDescription('Sigue con la música pausada'),
   new SlashCommandBuilder().setName('saltar').setDescription('Salta a la siguiente pista'),
