@@ -313,6 +313,12 @@
       <h2>Sonidos</h2>
       <p class="sub">Pulsa uno y el bot lo suena en su canal de voz.</p>
       <div class="grid" id="botonesSonidos" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))"></div>
+      <h3 style="margin:26px 0 10px">Tus mp3</h3>
+      <div class="card">
+        <input type="file" id="fileSonido" accept=".mp3,audio/mpeg">
+        <button class="btn" id="subirSonidoBtn" style="margin-top:10px">⬆️ Subir mp3</button>
+        <div id="subidos" style="margin-top:14px"></div>
+      </div>
     </section>
 
     <!-- RANKING -->
@@ -485,6 +491,7 @@ document.querySelectorAll('nav button[data-tab]').forEach(b => b.onclick = () =>
   document.querySelectorAll('nav button[data-tab]').forEach(x => x.classList.toggle('active', x === b));
   if (b.dataset.tab === 'ranking') cargarRanking();
   if (b.dataset.tab === 'chat') cargarChat();
+  if (b.dataset.tab === 'sonidos') cargarSubidos();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 $('entrar').onclick = entrar;
@@ -502,12 +509,40 @@ $('enviarVoz').onclick = async () => {
   $('textoVoz').value = ''; toast('Enviado al canal de voz');
 };
 const SONIDOS = ["bip", "bocina", "boing", "bombo", "campanita", "chispa", "cuerno", "ding", "error", "exito", "explosion", "fanfarria", "golpe", "gong", "grillo", "laser", "muelle", "pato", "platillo", "radar", "raton", "redoble", "sirena", "sonar", "tambor", "telefono", "tic", "tuturu", "vaso", "zumbido"];
-$('botonesSonidos').innerHTML = SONIDOS.map(n => `<button class="btn alt" onclick="sonar('${n}')">🔊 ${n}</button>`).join('');
-async function sonar(nombre) {
-  const { error } = await sb.rpc('pedir_sonido', { p_archivo: nombre + '.wav' });
+$('botonesSonidos').innerHTML = SONIDOS.map(n => `<button class="btn alt" onclick="sonar('${n}.wav')">🔊 ${n}</button>`).join('');
+async function sonar(archivo) {
+  const { error } = await sb.rpc('pedir_sonido', { p_archivo: archivo });
   if (error) return toast(error.message.replace(/^ERROR:\s*/, ''));
-  toast('🔊 ' + nombre);
+  toast('🔊 ' + archivo.replace(/\.(wav|mp3)$/, ''));
 }
+async function cargarSubidos() {
+  const { data, error } = await sb.storage.from('sonidos').list('', { limit: 100, sortBy: { column: 'name', order: 'asc' } });
+  if (error) return toast(error.message);
+  $('subidos').innerHTML = (data || []).filter(f => f.name.endsWith('.mp3')).map(f => `
+    <div class="row" style="padding:8px 0">
+      <button class="btn alt" onclick="sonar('${f.name}')">🔊 ${f.name.replace('.mp3', '')}</button>
+      <button class="btn alt" onclick="borrarSonido('${f.name}')" title="Borrar">🗑️</button>
+    </div>`).join('') || '<div class="muted">Aún no has subido ningún mp3.</div>';
+}
+async function subirSonido() {
+  const file = $('fileSonido').files[0];
+  if (!file) return toast('Elige un archivo mp3');
+  if (!file.name.toLowerCase().endsWith('.mp3')) return toast('Solo mp3');
+  if (file.size > 2 * 1024 * 1024) return toast('Máximo 2 MB');
+  const base = file.name.replace(/\.mp3$/i, '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9_-]+/g, '_').replace(/^_+|_+$/g, '') || 'sonido';
+  const { error } = await sb.storage.from('sonidos').upload(base + '.mp3', file, { upsert: true, contentType: 'audio/mpeg' });
+  if (error) return toast(error.message);
+  $('fileSonido').value = '';
+  toast('Sonido subido: ' + base);
+  cargarSubidos();
+}
+async function borrarSonido(nombre) {
+  const { error } = await sb.storage.from('sonidos').remove([nombre]);
+  if (error) return toast(error.message);
+  toast('Borrado'); cargarSubidos();
+}
+$('subirSonidoBtn').onclick = subirSonido;
 $('presentarme').onclick = () => accion('presentarse', {}, 'Te has presentado');
 
 if (!sb) $('avisoConfig').textContent = 'Falta configurar Supabase: pega la URL y la clave en index.html.';

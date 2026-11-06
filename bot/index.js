@@ -149,7 +149,15 @@ async function vigilarVoz() {
 
 // Reproduce un efecto de la carpeta sonidos, cortando lo que suene.
 async function sonarEfecto(archivo) {
-  if (!/^[a-z0-9_-]+\.wav$/.test(archivo) || !fs.existsSync(path.join(SONIDOS, archivo))) return;
+  if (!/^[a-z0-9_-]+\.(wav|mp3)$/.test(archivo)) return;
+  const local = path.join(SONIDOS, archivo);
+  // Los wav de fábrica están en el equipo; los mp3 subidos se descargan de Storage (siempre, por si cambiaron).
+  if (!(archivo.endsWith('.wav') && fs.existsSync(local))) {
+    if (!supabase) return;
+    const { data, error } = await supabase.storage.from('sonidos').download(archivo);
+    if (error || !data) { console.error('No pude bajar el sonido:', archivo); return; }
+    fs.writeFileSync(local, Buffer.from(await data.arrayBuffer()));
+  }
   const guild = client.guilds.cache.get(process.env.GUILD_ID) || client.guilds.cache.first();
   if (!guild) return;
   const e = estado(guild.id);
@@ -157,7 +165,7 @@ async function sonarEfecto(archivo) {
     if (!process.env.VOZ_CANAL_ID) { console.error('Falta VOZ_CANAL_ID en .env'); return; }
     await unirse(guild, process.env.VOZ_CANAL_ID, e);
   }
-  e.cola.unshift({ tipo: 'efecto', nombre: archivo, ruta: path.join(SONIDOS, archivo) });
+  e.cola.unshift({ tipo: 'efecto', nombre: archivo, ruta: local });
   e.player.stop(true);
   siguiente(guild.id);
 }
