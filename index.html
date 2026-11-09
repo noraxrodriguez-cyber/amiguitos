@@ -3,670 +3,1352 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AMIGUITOS · Sim económico</title>
-<meta name="description" content="El sim económico del servidor AMIGUITOS: trabaja, funda empresas y llega a gobernador.">
-<meta name="theme-color" content="#0f1016">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪙</text></svg>">
+<title>AMIGUITOS</title>
+<meta name="description" content="El sim económico del servidor AMIGUITOS: trabaja, monta empresas, roba a tus amigos y llega a gobernador.">
+<meta name="theme-color" content="#0f4a36">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2246%22 fill=%22%23f0b400%22 stroke=%22%231c1a17%22 stroke-width=%226%22/><circle cx=%2250%22 cy=%2250%22 r=%2226%22 fill=%22none%22 stroke=%22%231c1a17%22 stroke-width=%226%22/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
+  /* La mesa es un tapete de cartas y cada panel es un naipe de la baraja española.
+     El palo marca de qué va la sección, y se nota en el color y en los cortes de la línea
+     del borde, igual que en la baraja: oros sin corte, copas uno, espadas dos, bastos tres. */
   :root {
-    --bg:#0f1016; --bg2:#171924; --card:#1d2030; --card2:#252a3d; --line:#ffffff14;
-    --text:#f4f5f8; --muted:#9aa0b4; --accent:#ff7a59; --accent2:#7c83ff; --gold:#ffd166;
-    --ok:#57f287; --bad:#ff5c5c; --neon:#49f2a0;
-    --grad: linear-gradient(135deg, #ff7a59 0%, #ff4f8b 50%, #7c83ff 100%);
+    --tapete:#0f4a36; --tapete2:#0a3a2a; --naipe:#fbf5e1; --naipe2:#f1e8c9; --tinta:#1c1a17; --gris:#6f6857;
+    --oros:#f0b400; --copas:#d42a3c; --espadas:#1d5fc4; --bastos:#2c8a4b;
+    --palo:var(--oros);
+    --fuente:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   }
   * { box-sizing:border-box; }
+  html { scroll-padding-top:120px; }
   body {
-    margin:0; min-height:100vh; color:var(--text);
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    margin:0; min-height:100vh; color:var(--naipe); font-family:var(--fuente); font-size:16px; line-height:1.45;
     background:
-      radial-gradient(900px 500px at 10% -10%, #7c83ff33, transparent 60%),
-      radial-gradient(800px 500px at 110% 10%, #ff7a5933, transparent 60%),
-      var(--bg);
-    background-attachment: fixed;
+      radial-gradient(1200px 700px at 50% -200px, #17694d 0%, transparent 70%),
+      repeating-linear-gradient(45deg, #ffffff05 0 2px, transparent 2px 6px),
+      var(--tapete);
+    background-attachment:fixed;
   }
+  h1, h2, h3, p { margin:0; }
+  button, input, select, textarea { font:inherit; color:inherit; }
+  .num { font-variant-numeric:tabular-nums; }
+  [hidden] { display:none !important; }
 
   /* ---------- Cabecera ---------- */
   header {
-    position:sticky; top:0; z-index:10;
-    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
-    padding:12px 20px; background:rgba(15,16,22,.8); backdrop-filter:blur(10px);
-    border-bottom:1px solid var(--line);
+    position:sticky; top:0; z-index:30; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+    padding:10px 18px; background:var(--tapete2); border-bottom:3px solid var(--tinta);
   }
-  .brand { font-weight:900; font-size:22px; letter-spacing:.5px; }
-  .brand .x { background:var(--grad); -webkit-background-clip:text; background-clip:text; color:transparent; }
-  .dia { color:var(--muted); font-size:13px; margin-left:8px; font-weight:500; }
-  nav { display:flex; gap:6px; flex-wrap:wrap; }
+  .marca { font-weight:800; font-size:26px; letter-spacing:-.5px; font-stretch:75%; line-height:1; }
+  .marca small { display:block; font-size:12px; font-weight:500; letter-spacing:0; opacity:.75; margin-top:3px; }
+  .cartera { display:flex; gap:8px; margin-left:auto; flex-wrap:wrap; }
+  .ficha {
+    display:flex; align-items:baseline; gap:6px; padding:5px 12px; border-radius:999px; font-weight:700;
+    background:var(--naipe); color:var(--tinta); border:2px solid var(--tinta); font-size:15px;
+  }
+  .ficha span { font-size:12px; font-weight:500; color:var(--gris); }
+  .ficha.sucia { background:var(--tinta); color:var(--naipe); border-color:var(--espadas); }
+  .ficha.sucia span { color:#a9b6cf; }
+  .icono-btn {
+    position:relative; width:40px; height:40px; border-radius:50%; border:2px solid var(--tinta); cursor:pointer;
+    background:var(--oros); color:var(--tinta); font-size:18px; display:grid; place-items:center;
+  }
+  .icono-btn b { position:absolute; top:-6px; right:-6px; min-width:20px; height:20px; padding:0 5px; border-radius:10px;
+    background:var(--copas); color:#fff; font-size:12px; display:grid; place-items:center; border:2px solid var(--tinta); }
+  .salir { background:transparent; border:0; text-decoration:underline; cursor:pointer; opacity:.8; }
+
+  /* ---------- Estructura ---------- */
+  .mesa { display:grid; grid-template-columns:200px minmax(0, 1fr); gap:22px; max-width:1180px; margin:0 auto; padding:22px 18px 80px; }
+  nav { position:sticky; top:84px; align-self:start; display:flex; flex-direction:column; gap:4px; }
   nav button {
-    background:transparent; border:1px solid transparent; color:var(--muted); font:inherit; font-weight:600;
-    padding:8px 14px; border-radius:999px; cursor:pointer; transition:.15s;
+    display:flex; align-items:center; gap:10px; text-align:left; padding:9px 12px; border-radius:10px; cursor:pointer;
+    background:transparent; border:2px solid transparent; font-weight:600; font-size:16px;
   }
-  nav button:hover { color:var(--text); background:var(--card); }
-  nav button.active { color:#fff; background:var(--grad); }
-  nav button.salir { border-color:var(--line); }
+  nav button:hover { background:#ffffff14; }
+  nav button.activa { background:var(--naipe); color:var(--tinta); border-color:var(--tinta); }
+  nav svg { width:18px; height:18px; flex:none; }
+  main > section { display:none; }
+  main > section.activa { display:block; }
+  .titulo { display:flex; align-items:end; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+  .titulo h1 { font-size:44px; font-weight:800; font-stretch:75%; letter-spacing:-1px; line-height:1; }
+  .titulo p { max-width:56ch; opacity:.85; }
+  h2 { font-size:22px; font-weight:800; font-stretch:85%; line-height:1.15; margin-bottom:4px; }
+  h3 { font-size:16px; font-weight:700; }
+  .rejilla { display:grid; gap:16px; grid-template-columns:repeat(auto-fit, minmax(290px, 1fr)); align-items:start; }
+  .rejilla.tres { grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); }
+  .ancho { grid-column:1 / -1; }
 
-  main { max-width:1120px; margin:0 auto; padding:26px 18px 90px; }
-  /* El margen evita que el navegador esconda la sección bajo la cabecera al abrir un enlace con #pestaña. */
-  section { display:none; animation: fade .35s ease; scroll-margin-top:400px; }
-  section.active { display:block; }
-  @keyframes fade { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
-
-  h2 { margin:0 0 4px; font-size:28px; font-weight:800; }
-  .sub { color:var(--muted); margin:0 0 20px; font-size:14px; }
-
-  .grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); }
-  .grid.two { grid-template-columns:repeat(auto-fit, minmax(340px, 1fr)); }
-
-  .card {
-    background:linear-gradient(180deg, var(--card2), var(--card)); border:1px solid var(--line);
-    border-radius:20px; padding:20px; box-shadow:0 10px 30px #00000033;
+  /* ---------- Naipes ---------- */
+  .naipe {
+    position:relative; background:var(--naipe); color:var(--tinta); border-radius:14px; padding:24px 22px 22px;
+    border:2px solid var(--tinta); box-shadow:0 5px 0 #00000059;
   }
-  .card h3 { margin:0 0 6px; font-size:17px; }
-  .label { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:1px; font-weight:700; }
-  .big { font-size:40px; font-weight:900; color:var(--gold); line-height:1.1; margin:6px 0; }
-  .neon { font-size:32px; font-weight:900; color:var(--neon); margin:6px 0; }
-  .muted { color:var(--muted); font-size:14px; }
-  .bad { color:var(--bad); } .ok { color:var(--ok); }
-
-  .hero {
-    border-radius:24px; padding:28px; margin-bottom:18px; position:relative; overflow:hidden;
-    background: var(--grad); color:#fff;
+  .naipe::before {
+    content:""; position:absolute; inset:7px; border:1.5px solid var(--palo); border-radius:8px; pointer-events:none;
   }
-  .hero h1 { margin:0 0 6px; font-size:34px; font-weight:900; }
-  .hero p { margin:0; opacity:.92; }
-  .stats { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
-  .stat { background:#00000026; border-radius:14px; padding:10px 14px; min-width:110px; }
-  .stat b { display:block; font-size:20px; }
-  .stat span { font-size:12px; opacity:.85; }
+  .copas { --palo:var(--copas); }
+  .espadas { --palo:var(--espadas); }
+  .bastos { --palo:var(--bastos); }
+  .copas.naipe::before, .copas .naipe::before {
+    -webkit-mask:linear-gradient(90deg, #000 calc(50% - 9px), transparent 0 calc(50% + 9px), #000 0);
+            mask:linear-gradient(90deg, #000 calc(50% - 9px), transparent 0 calc(50% + 9px), #000 0);
+  }
+  .espadas.naipe::before, .espadas .naipe::before {
+    -webkit-mask:linear-gradient(90deg, #000 calc(33% - 9px), transparent 0 calc(33% + 9px), #000 0 calc(67% - 9px), transparent 0 calc(67% + 9px), #000 0);
+            mask:linear-gradient(90deg, #000 calc(33% - 9px), transparent 0 calc(33% + 9px), #000 0 calc(67% - 9px), transparent 0 calc(67% + 9px), #000 0);
+  }
+  .bastos.naipe::before, .bastos .naipe::before {
+    -webkit-mask:linear-gradient(90deg, #000 calc(25% - 9px), transparent 0 calc(25% + 9px), #000 0 calc(50% - 9px), transparent 0 calc(50% + 9px), #000 0 calc(75% - 9px), transparent 0 calc(75% + 9px), #000 0);
+            mask:linear-gradient(90deg, #000 calc(25% - 9px), transparent 0 calc(25% + 9px), #000 0 calc(50% - 9px), transparent 0 calc(50% + 9px), #000 0 calc(75% - 9px), transparent 0 calc(75% + 9px), #000 0);
+  }
+  .naipe.noche { background:#16171b; color:var(--naipe); --gris:#a9b0c0; --naipe2:#24262d; }
+  .naipe > * { position:relative; }
+  .nota { color:var(--gris); font-size:14px; }
+  .cifra { font-size:40px; font-weight:800; font-stretch:75%; line-height:1; letter-spacing:-1px; }
+  .fila { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px dashed #1c1a1733; flex-wrap:wrap; }
+  .noche .fila { border-bottom-color:#ffffff26; }
+  .fila:last-child { border-bottom:0; padding-bottom:0; }
+  .fila.dato { flex-wrap:nowrap; align-items:baseline; }
+  .fila.dato > b { white-space:nowrap; }
+  .fila.dato small { display:block; }
+  .linea { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .pila { display:grid; gap:10px; }
+  .sep { margin-top:14px; }
 
-  .news { display:flex; flex-direction:column; gap:12px; }
-  .new { border-left:4px solid var(--accent); padding:12px 14px; background:#ffffff08; border-radius:12px; }
-  .new small { color:var(--muted); }
-  .new p { margin:4px 0 0; }
-
-  .row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 0; border-bottom:1px solid var(--line); flex-wrap:wrap; }
-  .row:last-child { border-bottom:0; }
-
+  /* ---------- Botones y campos ---------- */
   .btn {
-    display:inline-flex; align-items:center; justify-content:center; gap:6px; border:0; border-radius:12px;
-    padding:10px 16px; font:inherit; font-weight:700; cursor:pointer; color:#fff; background:var(--grad);
-    transition:transform .1s, opacity .15s;
+    display:inline-flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; white-space:nowrap;
+    padding:9px 16px; border-radius:10px; font-weight:700; border:2px solid var(--tinta);
+    background:var(--tinta); color:var(--naipe); box-shadow:0 3px 0 #00000073; transition:transform .06s, box-shadow .06s;
   }
-  .btn:hover { transform:translateY(-1px); }
-  .btn.alt { background:var(--card2); border:1px solid var(--line); color:var(--text); }
-  .btn.neon { background:var(--neon); color:#03170f; }
-  .btn:disabled { opacity:.4; cursor:not-allowed; transform:none; }
-
+  .btn:active { transform:translateY(3px); box-shadow:none; }
+  .btn.oro { background:var(--oros); color:var(--tinta); }
+  .btn.rojo { background:var(--copas); color:#fff; }
+  .btn.azul { background:var(--espadas); color:#fff; }
+  .btn.claro { background:var(--naipe); color:var(--tinta); }
+  .btn.mini { padding:5px 10px; font-size:14px; border-radius:8px; }
+  .btn:disabled, .btn.ocupado { opacity:.45; cursor:not-allowed; transform:none; box-shadow:0 3px 0 #00000073; }
+  .btn.ocupado { pointer-events:none; }
+  .noche .btn { border-color:#000; }
+  .noche .btn:not(.oro):not(.rojo):not(.azul) { background:var(--naipe); color:var(--tinta); }
   input, select, textarea {
-    background:var(--bg2); border:1px solid var(--line); color:var(--text);
-    padding:10px 12px; border-radius:12px; font:inherit; min-width:0;
+    background:var(--naipe2); color:inherit; border:2px solid var(--tinta); border-radius:10px; padding:8px 10px; min-width:0;
   }
-  input:focus, select:focus, textarea:focus { outline:2px solid #7c83ff66; }
-  textarea { width:100%; resize:vertical; font:inherit; }
+  .noche input, .noche select, .noche textarea { border-color:#565a66; }
+  input[type=number] { width:130px; }
+  input.corto { width:76px; }
+  textarea { width:100%; resize:vertical; }
+  label.campo { display:grid; gap:3px; font-size:13px; color:var(--gris); }
+  label.campo > * { font-size:16px; color:var(--tinta); }
+  .noche label.campo > * { color:var(--naipe); }
+  :focus-visible { outline:3px solid var(--espadas); outline-offset:2px; }
+  .noche :focus-visible, header :focus-visible, nav :focus-visible { outline-color:var(--oros); }
 
-  .chips { display:flex; gap:8px; flex-wrap:wrap; }
-  .chip { background:var(--bg2); border:1px solid var(--line); border-radius:999px; padding:6px 12px; font-size:13px; color:var(--muted); }
+  .barra { height:10px; border-radius:5px; background:var(--naipe2); border:1.5px solid var(--tinta); overflow:hidden; }
+  .barra i { display:block; height:100%; width:0; background:var(--palo); transition:width .9s linear; }
+  .sello { display:inline-block; padding:1px 8px; border-radius:6px; font-size:12px; font-weight:700; border:1.5px solid currentColor; }
+  .sello.rojo { color:var(--copas); } .sello.verde { color:var(--bastos); } .sello.azul { color:var(--espadas); }
 
-  /* Mercado oscuro */
-  .dark-wrap {
-    border-radius:22px; padding:22px; background:#070a09; border:1px solid #49f2a04d;
-    font-family: ui-monospace, Menlo, Consolas, monospace; color:#c9f7e3;
-  }
-  .dark-wrap h2 { color:var(--neon); font-family:inherit; }
-  .dark-wrap .muted { color:#7ea596; }
+  /* ---------- Inicio: la mano ---------- */
+  .franja { display:flex; gap:12px; align-items:center; flex-wrap:wrap; padding:12px 16px; border-radius:12px; border:2px solid var(--tinta); margin-bottom:14px; font-weight:600; }
+  .franja.evento { background:var(--oros); color:var(--tinta); }
+  .franja.decreto { background:var(--naipe); color:var(--tinta); }
+  .franja.carcel { background:var(--tinta); color:var(--naipe); border-color:var(--copas); }
+  .franja .btn { margin-left:auto; }
+  .mano { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:14px; margin-bottom:20px; }
+  .carta { aspect-ratio:5 / 7; max-height:250px; width:100%; display:flex; flex-direction:column; justify-content:space-between; padding:20px 18px; cursor:pointer; text-align:left; font:inherit; }
+  .carta .palo-nombre { font-weight:700; font-size:15px; }
+  .carta .cifra { font-size:clamp(26px, 3.6vw, 46px); overflow-wrap:anywhere; }
+  .carta svg { width:34px; height:34px; align-self:flex-end; }
+  .carta:nth-child(1) { transform:rotate(-2.5deg); } .carta:nth-child(2) { transform:rotate(-.8deg) translateY(-6px); }
+  .carta:nth-child(3) { transform:rotate(.8deg) translateY(-6px); } .carta:nth-child(4) { transform:rotate(2.5deg); }
+  .carta:hover { transform:translateY(-8px); transition:transform .15s; }
+  .reparto .carta { animation:repartir .5s cubic-bezier(.2,.8,.3,1) backwards; }
+  .reparto .carta:nth-child(2) { animation-delay:.07s; } .reparto .carta:nth-child(3) { animation-delay:.14s; } .reparto .carta:nth-child(4) { animation-delay:.21s; }
+  @keyframes repartir { from { opacity:0; translate:0 -60px; rotate:-14deg; } }
+  .noticia { display:grid; grid-template-columns:34px 1fr; gap:10px; padding:10px 0; border-bottom:1px dashed #1c1a1733; }
+  .noticia:last-child { border-bottom:0; }
+  .noticia .ico { font-size:24px; line-height:1.1; }
+  .noticia time { font-size:12px; color:var(--gris); }
+  .noticia.fija { background:#f0b40033; margin:0 -10px; padding:10px; border-radius:8px; border-bottom:0; }
 
-  .aviso { background:#7c83ff1a; border:1px dashed #7c83ff66; color:var(--muted); padding:12px 14px; border-radius:12px; font-size:13px; line-height:1.5; margin-top:14px; }
+  /* ---------- Casino ---------- */
+  .rodillos { display:flex; gap:8px; justify-content:center; margin:12px 0; }
+  .rodillos span { width:76px; height:86px; display:grid; place-items:center; font-size:44px; background:#fff; border:2px solid var(--tinta); border-radius:10px; box-shadow:inset 0 6px 10px #0002; }
+  .moneda { width:96px; height:96px; margin:10px auto; border-radius:50%; display:grid; place-items:center; font-weight:800; font-size:20px;
+    background:var(--oros); border:3px solid var(--tinta); box-shadow:inset 0 0 0 7px #ffffff5c; }
+  .moneda.gira { animation:girar .7s ease-out; }
+  @keyframes girar { from { transform:rotateY(1440deg) scale(.6); } }
+  .grafica { width:100%; height:90px; display:block; margin:8px 0; }
 
-  /* Login */
-  .login { max-width:460px; margin:70px auto; text-align:center; }
-  .login .logo { font-size:48px; font-weight:900; margin-bottom:6px; }
-  .login .logo span { background:var(--grad); -webkit-background-clip:text; background-clip:text; color:transparent; }
-  .login p { color:var(--muted); }
-  .login .btn { font-size:16px; padding:14px 22px; margin-top:8px; }
+  /* ---------- Gente ---------- */
+  .persona { display:grid; grid-template-columns:34px 1fr auto; gap:10px; align-items:center; width:100%; text-align:left; background:transparent; border:0; cursor:pointer; padding:10px 6px; border-bottom:1px dashed #1c1a1733; border-radius:8px; }
+  .persona:hover { background:var(--naipe2); }
+  .persona.yo { background:#f0b40033; }
+  .persona .pos { font-weight:800; font-size:20px; text-align:center; }
+  .persona small { display:block; color:var(--gris); }
+  .mote { font-style:italic; color:var(--copas); }
 
-  .toast {
-    position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--card2);
-    border:1px solid var(--line); padding:12px 18px; border-radius:14px; box-shadow:0 10px 30px #0008;
-    opacity:0; transition:opacity .25s; pointer-events:none; z-index:20; max-width:90vw;
-  }
-  .toast.show { opacity:1; }
-
-  .toast.err { border-color:#ff5c5c88; color:#ffd0d0; }
-  .btn.stop { background:var(--bad); color:#fff; }
-  .btn.mini { padding:8px 10px; border-radius:10px; }
-  .btn.busy { opacity:.6; pointer-events:none; }
-
-  /* Tarjetas resumen */
-  .kpis { display:grid; gap:12px; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); margin-bottom:18px; }
-  .kpi { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px 16px; cursor:pointer; transition:.15s; text-align:left; color:inherit; font:inherit; }
-  .kpi:hover { border-color:#ffffff33; transform:translateY(-2px); }
-  .kpi b { display:block; font-size:24px; font-weight:900; margin-top:4px; font-variant-numeric:tabular-nums; }
-
-  /* Barra de espera */
-  .barra { height:8px; border-radius:999px; background:var(--bg2); overflow:hidden; margin-top:12px; }
-  .barra i { display:block; height:100%; width:0; background:var(--grad); border-radius:999px; transition:width .9s linear; }
-  .barra.neon i { background:var(--neon); }
-
-  /* Podio */
-  .podio { display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; align-items:end; margin-bottom:16px; }
-  .podio > div { background:linear-gradient(180deg, var(--card2), var(--card)); border:1px solid var(--line); border-radius:18px; padding:16px 10px; text-align:center; min-width:0; }
-  .podio .p1 { padding-top:30px; border-color:#ffd16666; }
-  .podio .medalla { font-size:30px; }
-  .podio .nom { font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .podio .val { color:var(--gold); font-weight:800; font-variant-numeric:tabular-nums; }
-  .row.yo { background:#7c83ff1f; border-radius:10px; padding-left:10px; padding-right:10px; }
+  /* ---------- Admin ---------- */
+  .subtabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
+  .subtabs button { padding:7px 14px; border-radius:999px; border:2px solid var(--tinta); background:var(--tapete2); cursor:pointer; font-weight:600; }
+  .subtabs button.activa { background:var(--naipe); color:var(--tinta); }
+  .panel { display:none; } .panel.activa { display:block; }
+  table { width:100%; border-collapse:collapse; font-size:15px; }
+  th { text-align:left; font-weight:700; font-size:13px; color:var(--gris); padding:6px 8px; border-bottom:2px solid var(--tinta); white-space:nowrap; }
+  td { padding:7px 8px; border-bottom:1px dashed #1c1a1733; vertical-align:middle; }
+  td.n, th.n { text-align:right; font-variant-numeric:tabular-nums; }
+  .tabla { overflow-x:auto; }
+  .ajuste { display:grid; grid-template-columns:1fr 120px; gap:10px; align-items:center; padding:6px 0; border-bottom:1px dashed #1c1a1733; }
+  .ajuste small { color:var(--gris); display:block; }
+  .ajuste input { width:100%; }
+  .ajuste input.cambiado { background:#f0b40059; }
+  details.grupo { border-bottom:2px solid var(--tinta); padding:8px 0; }
+  details.grupo summary { cursor:pointer; font-weight:800; font-size:18px; font-stretch:85%; padding:4px 0; }
 
   /* Panel de sonidos */
-  .mando { position:sticky; top:64px; z-index:5; display:flex; gap:8px; flex-wrap:wrap; align-items:center;
-    background:rgba(23,25,36,.92); backdrop-filter:blur(10px); border:1px solid var(--line); border-radius:16px; padding:10px; margin-bottom:16px; }
+  .mando { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
   .mando input { flex:1; min-width:140px; }
-  .sonando { color:var(--muted); font-size:13px; flex-basis:100%; }
-  .sonidos { display:grid; gap:10px; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); }
-  .son { display:flex; background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; transition:.12s; }
-  .son:hover { border-color:#ffffff33; }
-  .son.activo { border-color:var(--accent); box-shadow:0 0 0 2px #ff7a5944; }
-  .son button { background:transparent; border:0; color:var(--text); font:inherit; cursor:pointer; padding:12px 8px; }
-  .son button:hover { background:#ffffff0f; }
-  .son .tocar { flex:1; text-align:left; font-weight:700; padding-left:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .son .fav.on { color:var(--gold); }
-  .chip.btnc { cursor:pointer; font:inherit; font-size:13px; }
-  .chip.btnc:hover { color:var(--text); border-color:#ffffff33; }
+  .sonidos { display:grid; gap:8px; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); }
+  .son { display:flex; background:var(--naipe2); border:2px solid var(--tinta); border-radius:10px; overflow:hidden; }
+  .son.activo { background:var(--oros); }
+  .son button { background:transparent; border:0; cursor:pointer; padding:9px 7px; }
+  .son button:hover { background:#0000001a; }
+  .son .tocar { flex:1; text-align:left; font-weight:700; padding-left:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .son .fav.on { color:var(--copas); }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; }
+  .chip { background:var(--naipe2); border:1.5px solid var(--tinta); border-radius:999px; padding:4px 11px; font-size:14px; cursor:pointer; }
 
-  footer { text-align:center; color:var(--muted); font-size:12px; padding:0 18px 30px; }
-  :focus-visible { outline:2px solid var(--accent2); outline-offset:2px; }
-  @media (prefers-reduced-motion: reduce) { * { animation:none !important; transition:none !important; } }
-
-  @media (max-width:640px) {
-    .mando { top:104px; }
-    header { padding:10px 12px; }
-    nav { width:100%; overflow-x:auto; flex-wrap:nowrap; padding-bottom:4px; }
-    nav button { white-space:nowrap; }
-    h2 { font-size:24px; }
-    .big { font-size:34px; }
-    .hero h1 { font-size:26px; }
+  /* ---------- Diálogos, avisos y tartazo ---------- */
+  dialog { border:0; padding:0; background:transparent; color:inherit; width:min(560px, calc(100vw - 24px)); max-height:calc(100vh - 24px); }
+  dialog::backdrop { background:#041a12d9; }
+  dialog .naipe { max-height:calc(100vh - 40px); overflow-y:auto; }
+  .cerrar { position:absolute !important; top:12px; right:14px; background:transparent; border:0; font-size:22px; cursor:pointer; z-index:2; }
+  .toast {
+    position:fixed; bottom:22px; left:50%; translate:-50% 0; z-index:60; max-width:min(92vw, 560px);
+    background:var(--naipe); color:var(--tinta); border:2px solid var(--tinta); border-radius:12px; padding:12px 16px;
+    box-shadow:0 5px 0 #00000073; font-weight:600; opacity:0; pointer-events:none; transition:opacity .2s, translate .2s;
   }
+  .toast.ver { opacity:1; translate:-50% -6px; }
+  .toast.mal { background:var(--copas); color:#fff; }
+  .toast.bien { background:var(--oros); }
+  .tarta { position:fixed; inset:0; z-index:80; display:grid; place-items:center; padding:20px; text-align:center; cursor:pointer;
+    background:radial-gradient(circle at 50% 45%, #fff8e6 0 30%, #f6d9a4 31% 52%, #c98a4b 53% 60%, transparent 61%), #041a12eb; color:var(--tinta); animation:plaf .35s cubic-bezier(.2,1.6,.4,1); }
+  .tarta div { max-width:300px; }
+  .tarta big { display:block; font-size:70px; }
+  .tarta p { font-weight:700; font-size:18px; }
+  @keyframes plaf { from { transform:scale(.1) rotate(-30deg); opacity:0; } }
+
+  /* ---------- Entrada ---------- */
+  .puerta { max-width:520px; margin:8vh auto 0; text-align:center; padding:0 18px; }
+  .puerta h1 { font-size:clamp(54px, 13vw, 104px); font-weight:800; font-stretch:75%; letter-spacing:-3px; line-height:.9; }
+  .puerta p { margin:18px auto 22px; font-size:18px; max-width:40ch; }
+  .puerta .btn { font-size:18px; padding:13px 24px; }
+  .puerta .naipe { margin-top:26px; text-align:left; }
+  pre { white-space:pre-wrap; word-break:break-word; background:var(--naipe2); padding:10px; border-radius:8px; font-size:13px; max-height:160px; overflow:auto; }
+
+  @media (max-width:860px) {
+    .mesa { grid-template-columns:1fr; gap:14px; padding-top:12px; }
+    nav { position:sticky; top:0; z-index:20; flex-direction:row; overflow-x:auto; margin:0 -18px; padding:8px 18px; background:var(--tapete2); border-bottom:3px solid var(--tinta); }
+    nav button { white-space:nowrap; padding:7px 11px; font-size:15px; }
+    header { position:static; }
+    .titulo h1 { font-size:34px; }
+    .mano { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+    .carta { aspect-ratio:auto; min-height:120px; transform:none !important; }
+    .cartera { margin-left:0; width:100%; }
+    .ficha { font-size:14px; padding:4px 10px; }
+  }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation:none !important; transition:none !important; } }
 </style>
 </head>
 <body>
 
-<!-- Configuración: pega aquí la URL y la clave anon de tu proyecto de Supabase -->
+<!-- Configuración de Supabase: URL del proyecto y clave pública (la secreta nunca va aquí) -->
 <script>
   const SUPABASE_URL = 'https://rkkibsolkhvolnlejgxu.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_i6rtQaM4YaMaF4DGRFebxA_y2Js5E9M';
 </script>
 
+<!-- Los cuatro palos, para el menú y las cartas -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="p-oros" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#f0b400" stroke="#1c1a17" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="#1c1a17" stroke-width="2"/></symbol>
+  <symbol id="p-copas" viewBox="0 0 24 24"><path d="M5 3h14v5a7 7 0 0 1-5.5 6.8V19H17v2H7v-2h3.500v-4.2A7 7 0 0 1 5 8z" fill="#d42a3c" stroke="#1c1a17" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="p-espadas" viewBox="0 0 24 24"><path d="M12 1l4.500 5v9h-9V6z" fill="#1d5fc4" stroke="#1c1a17" stroke-width="2" stroke-linejoin="round"/><path d="M4.500 15.500h15M12 16v6.500" stroke="#1c1a17" stroke-width="3" stroke-linecap="round"/></symbol>
+  <symbol id="p-bastos" viewBox="0 0 24 24"><path d="M7.500 22l2-12a5.500 5.500 0 1 1 5 0l2 12z" fill="#2c8a4b" stroke="#1c1a17" stroke-width="2" stroke-linejoin="round"/></symbol>
+</svg>
+
+<!-- ENTRADA -->
+<div class="puerta" id="puerta">
+  <h1>AMIGUITOS</h1>
+  <p>Trabaja, monta empresas, róbale a tus amigos y preséntate a gobernador. Todo es dinero de mentira.</p>
+  <button class="btn oro" id="entrar">Entrar con Discord</button>
+  <div class="naipe bastos" id="montaje" hidden>
+    <h2>Falta un paso para estrenar esta versión</h2>
+    <p class="nota">La web ya es la nueva, pero la base de datos todavía es la antigua. El dueño tiene que ejecutar una vez el archivo <b>supabase/v2.sql</b> en Supabase, en el editor de SQL.</p>
+    <div class="linea sep">
+      <button class="btn oro" id="copiarSql">Copiar el SQL</button>
+      <a class="btn claro" target="_blank" rel="noopener" href="https://supabase.com/dashboard/project/rkkibsolkhvolnlejgxu/sql/new">Abrir el editor de SQL</a>
+      <button class="btn" onclick="location.reload()">Ya está, recargar</button>
+    </div>
+    <pre id="errMontaje" class="sep"></pre>
+  </div>
+  <div class="naipe copas" id="expulsado" hidden>
+    <h2>Estás fuera del juego</h2>
+    <p class="nota">El admin te ha expulsado. Si crees que es un error, díselo por Discord.</p>
+    <button class="btn sep" onclick="salir()">Salir</button>
+  </div>
+</div>
+
+<div id="app" hidden>
 <header>
-  <div class="brand"><span class="x">AMIGUITOS</span><span class="dia" id="diaTxt"></span></div>
-  <nav id="tabs" style="display:none">
-    <button data-tab="inicio" class="active">Inicio</button>
-    <button data-tab="economia">Economía</button>
-    <button data-tab="empresas">Empresas</button>
-    <button data-tab="oscuro">Mercado oscuro</button>
-    <button data-tab="gobierno">Gobierno</button>
-    <button data-tab="chat">Chat</button>
-    <button data-tab="ranking">Ranking</button>
-    <button data-tab="voz" id="tabVoz" style="display:none">Voz</button>
-    <button data-tab="sonidos" id="tabSonidos" style="display:none">Sonidos</button>
-    <button id="salir" class="salir">Salir</button>
-  </nav>
+  <div class="marca">AMIGUITOS<small id="diaTxt"></small></div>
+  <div class="cartera">
+    <div class="ficha" title="Dinero que llevas encima. Te lo pueden robar."><span>en mano</span><b class="num" id="hMano">0</b></div>
+    <div class="ficha" title="Dinero en el banco. A salvo de robos."><span>banco</span><b class="num" id="hBanco">0</b></div>
+    <div class="ficha sucia" title="Dinero sucio. Hay que blanquearlo."><span>sucio</span><b class="num" id="hSucio">0</b></div>
+  </div>
+  <button class="icono-btn" id="campana" title="Avisos" aria-label="Avisos">🔔<b id="nAvisos" hidden>0</b></button>
+  <button class="salir" id="salir">Salir</button>
 </header>
 
+<div class="mesa">
+<nav id="menu" aria-label="Secciones">
+  <button data-tab="inicio"><svg><use href="#p-oros"/></svg>Inicio</button>
+  <button data-tab="trabajo"><svg><use href="#p-oros"/></svg>Trabajo</button>
+  <button data-tab="banco"><svg><use href="#p-oros"/></svg>Banco</button>
+  <button data-tab="empresas"><svg><use href="#p-oros"/></svg>Empresas</button>
+  <button data-tab="casino"><svg><use href="#p-copas"/></svg>Casino</button>
+  <button data-tab="tienda"><svg><use href="#p-copas"/></svg>Tienda</button>
+  <button data-tab="gente"><svg><use href="#p-copas"/></svg>Gente</button>
+  <button data-tab="fondos"><svg><use href="#p-espadas"/></svg>Bajos fondos</button>
+  <button data-tab="ayto"><svg><use href="#p-bastos"/></svg>Ayuntamiento</button>
+  <button data-tab="admin" id="tabAdmin" hidden><svg><use href="#p-bastos"/></svg>Admin</button>
+</nav>
+
 <main>
-  <!-- LOGIN -->
-  <section id="login" class="login">
-    <div class="logo">AMI<span>GUITOS</span></div>
-    <p>Un sim económico para el servidor. Trabaja, funda empresas y llega a gobernador.</p>
-    <button class="btn" id="entrar">Entrar con Discord</button>
-    <div class="aviso" id="avisoConfig">Antes de usarla, pon la URL y la clave de Supabase en el archivo index.html.</div>
+  <!-- ================= INICIO ================= -->
+  <section id="inicio">
+    <div id="franjas"></div>
+    <div class="titulo"><h1 id="saludo">Hola</h1><p id="subSaludo"></p></div>
+    <div class="mano reparto" id="mano"></div>
+    <div class="rejilla">
+      <div class="naipe copas">
+        <h2>Lo que se cuenta por ahí</h2>
+        <div id="noticias"></div>
+      </div>
+      <div class="pila">
+        <div class="naipe">
+          <h2>Tus avisos</h2>
+          <div id="avisosInicio"></div>
+        </div>
+        <div class="naipe bastos">
+          <h2>Cómo va esto</h2>
+          <div class="nota pila" style="gap:6px">
+            <p><b>En mano</b> es lo que llevas encima: lo gastas, lo apuestas y te lo pueden robar. Lo que metas en el <b>banco</b> está a salvo y da intereses.</p>
+            <p>El <b>dinero sucio</b> no sirve para comprar. Hay que blanquearlo, y Hacienda puede pillarte.</p>
+            <p>Cada <b>semana</b> hay elecciones. Quien gana pone los impuestos y maneja el tesoro.</p>
+            <p>Un día del juego es un día real. Las empresas, el banco y los blanqueos avanzan al cambiar de día.</p>
+          </div>
+        </div>
+      </div>
+    </div>
   </section>
 
-  <div id="app" style="display:none">
+  <!-- ================= TRABAJO ================= -->
+  <section id="trabajo">
+    <div class="titulo"><h1>Trabajo</h1><p>La forma honrada de ganar dinero. Lenta, pero nadie te mete en la cárcel por fichar.</p></div>
+    <div class="rejilla">
+      <div class="naipe">
+        <h2 id="tituloNivel">Becario</h2>
+        <p class="nota" id="txtNivel"></p>
+        <div class="barra sep"><i id="barXp"></i></div>
+        <div class="linea sep">
+          <button class="btn oro" data-rpc="trabajar" id="bTrabajar">Ir a trabajar</button>
+          <span class="nota" id="cdTrabajar"></span>
+        </div>
+        <div class="barra sep"><i id="barTrabajar"></i></div>
+        <p class="nota sep" id="txtSueldo"></p>
+      </div>
+      <div class="naipe">
+        <h2>Paga diaria</h2>
+        <p class="nota" id="txtDiario"></p>
+        <button class="btn oro sep" data-rpc="diario" id="bDiario">Cobrar la paga de hoy</button>
+      </div>
+      <div class="naipe">
+        <h2>Café doble</h2>
+        <p class="nota" id="txtCafe"></p>
+        <button class="btn sep" data-do="comprar" data-item="cafe" id="bCafe">Tomar un café</button>
+      </div>
+      <div class="naipe">
+        <h2>Mendigar</h2>
+        <p class="nota" id="txtMendigar"></p>
+        <div class="linea sep">
+          <button class="btn claro" data-rpc="mendigar" id="bMendigar">Poner la mano</button>
+          <span class="nota" id="cdMendigar"></span>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    <!-- INICIO -->
-    <section id="inicio" class="active">
-      <div class="hero">
-        <h1 id="saludo">Bienvenido a AMIGUITOS</h1>
-        <p>Trabaja, funda empresas, blanquea dinero y no te dejes pillar por el gobernador.</p>
-        <div class="stats">
-          <div class="stat"><b id="stJugadores">0</b><span>jugadores</span></div>
-          <div class="stat"><b id="stDia">1</b><span>día del juego</span></div>
-          <div class="stat"><b id="stSemana">1</b><span>semana</span></div>
+  <!-- ================= BANCO ================= -->
+  <section id="banco">
+    <div class="titulo"><h1>Banco</h1><p>Lo que guardes aquí no te lo roba nadie y crece solo cada día.</p></div>
+    <div class="rejilla">
+      <div class="naipe">
+        <h2>Tu cuenta</h2>
+        <div class="cifra num" id="bBanco">0</div>
+        <p class="nota" id="txtInteres"></p>
+        <div class="fila sep">
+          <label class="campo">Ingresar<input type="number" min="1" id="mDepositar" placeholder="Cantidad"></label>
+          <div class="linea"><button class="btn mini claro" data-do="todo" data-en="mDepositar" data-de="saldo">Todo</button><button class="btn oro" data-do="depositar">Ingresar</button></div>
+        </div>
+        <div class="fila">
+          <label class="campo">Sacar<input type="number" min="1" id="mRetirar" placeholder="Cantidad"></label>
+          <div class="linea"><button class="btn mini claro" data-do="todo" data-en="mRetirar" data-de="banco">Todo</button><button class="btn" data-do="retirar">Sacar</button></div>
         </div>
       </div>
-      <div class="kpis">
-        <button class="kpi" onclick="irA('economia')"><span class="label">Saldo limpio</span><b id="kSaldo" style="color:var(--gold)">0</b></button>
-        <button class="kpi" onclick="irA('oscuro')"><span class="label">Dinero sucio</span><b id="kSucio" style="color:var(--neon)">0</b></button>
-        <button class="kpi" onclick="irA('empresas')"><span class="label">Empresas</span><b id="kEmp">0</b></button>
-        <button class="kpi" onclick="irA('chat')"><span class="label">Monedas de chat</span><b id="kChat">0</b></button>
-        <button class="kpi" onclick="irA('economia')"><span class="label">Trabajo</span><b id="kTrabajo" style="font-size:18px">…</b></button>
-      </div>
-      <div class="grid two">
-        <div class="card">
-          <h3>📰 Noticias del servidor</h3>
-          <div class="news" id="noticias"></div>
-        </div>
-        <div class="card">
-          <h3>📜 Cómo se juega</h3>
-          <div class="muted" style="line-height:1.7">
-            • <b>Trabajar</b> cada 20 min te da saldo limpio.<br>
-            • <b>Fundar empresas</b> para que produzcan cada día.<br>
-            • Una <b>semana</b> es una elección: vota al gobernador.<br>
-            • El gobernador sube o baja <b>impuestos</b> una vez por semana.<br>
-            • El <b>mercado oscuro</b> da dinero sucio. Si lo blanqueas, puede caer una <b>auditoría</b>.
-          </div>
+      <div class="naipe">
+        <h2>Enviar dinero</h2>
+        <p class="nota">Sale de lo que llevas en mano y llega al momento.</p>
+        <div class="pila sep">
+          <label class="campo">Para<select class="quien" id="tQuien"></select></label>
+          <label class="campo">Cantidad<input type="number" min="1" id="tMonto"></label>
+          <label class="campo">Nota (opcional)<input id="tNota" maxlength="80" placeholder="Por lo del kebab"></label>
+          <div><button class="btn oro" data-do="transferir">Enviar</button></div>
         </div>
       </div>
-    </section>
+      <div class="naipe copas">
+        <h2>Monedas de chat</h2>
+        <p class="nota">Ganas una por cada mensaje que escribes en Discord. Aquí las cambias por dinero del juego.</p>
+        <div class="cifra num sep" id="cLibres">0</div>
+        <p class="nota" id="txtCanje"></p>
+        <div class="linea sep">
+          <input type="number" min="1" id="cMonto" placeholder="Cuántas">
+          <button class="btn mini claro" data-do="todo" data-en="cMonto" data-de="chat">Todas</button>
+          <button class="btn oro" data-do="canjear">Canjear</button>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    <!-- ECONOMÍA -->
-    <section id="economia">
-      <h2>Economía</h2>
-      <p class="sub">Tu dinero y los impuestos vigentes. Todo lo calcula el servidor.</p>
-      <div class="grid two">
-        <div class="card">
-          <div class="label">Saldo limpio</div>
-          <div class="big" id="saldo">0 🪙</div>
-          <div class="muted" id="sucio"></div>
-          <button class="btn" id="trabajar" style="margin-top:14px">💼 Trabajar</button>
-          <div class="barra"><i id="barTrabajar"></i></div>
-          <div class="muted" id="cdTrabajar" style="margin-top:8px"></div>
+  <!-- ================= EMPRESAS ================= -->
+  <section id="empresas">
+    <div class="titulo"><h1>Empresas</h1><p>Producen todos los días aunque no entres. Hacienda se lleva su parte según los impuestos del gobernador.</p></div>
+    <div class="naipe" style="margin-bottom:16px">
+      <h2>Fundar una empresa</h2>
+      <div class="linea sep">
+        <input id="eNombre" maxlength="30" placeholder="Nombre de la empresa" style="flex:1; min-width:180px">
+        <select id="eSector"></select>
+        <button class="btn oro" data-do="fundar" id="bFundar">Fundar</button>
+      </div>
+      <p class="nota sep" id="txtFundar"></p>
+    </div>
+    <div class="rejilla" id="listaEmp"></div>
+  </section>
+
+  <!-- ================= CASINO ================= -->
+  <section id="casino" class="copas">
+    <div class="titulo"><h1>Casino</h1><p>Se juega con lo que llevas en mano. La casa siempre gana un poco, y la casa es el tesoro.</p></div>
+    <div class="rejilla">
+      <div class="naipe">
+        <h2>Cara o cruz</h2>
+        <div class="moneda" id="monedaVista">?</div>
+        <div class="linea" style="justify-content:center">
+          <input type="number" min="1" id="aMoneda" value="50" class="corto" aria-label="Apuesta">
+          <button class="btn oro" data-do="moneda" data-cara="1">Cara</button>
+          <button class="btn" data-do="moneda" data-cara="0">Cruz</button>
         </div>
-        <div class="card">
-          <div class="label">Impuestos vigentes</div>
-          <div class="chips" id="impuestos" style="margin:12px 0"></div>
-          <div class="muted">Auditoría: <b id="aud"></b>%</div>
-          <div class="muted" style="margin-top:8px">Gobernador: <b id="govMini"></b></div>
+        <p class="nota sep" style="text-align:center">Doble o nada.</p>
+      </div>
+      <div class="naipe">
+        <h2>Tragaperras</h2>
+        <div class="rodillos" id="rodillos"><span>🍒</span><span>🔔</span><span>💎</span></div>
+        <div class="linea" style="justify-content:center">
+          <input type="number" min="1" id="aSlots" value="25" class="corto" aria-label="Apuesta">
+          <button class="btn rojo" data-do="slots" id="bSlots">Tirar</button>
+        </div>
+        <p class="nota sep" style="text-align:center">Pareja: recuperas. Trío: 🍒×3 🍋×5 🔔×10 💎×25 7️⃣×80.</p>
+      </div>
+      <div class="naipe">
+        <h2>Ruleta rusa</h2>
+        <p class="nota" id="txtRuleta"></p>
+        <button class="btn rojo sep" data-do="ruleta">Apretar el gatillo</button>
+      </div>
+      <div class="naipe">
+        <h2>Lotería</h2>
+        <div class="cifra num" id="lBote">0</div>
+        <p class="nota" id="txtLoteria"></p>
+        <div class="linea sep">
+          <input type="number" min="1" id="lN" value="1" class="corto" aria-label="Boletos">
+          <button class="btn oro" data-do="loteria">Comprar boletos</button>
         </div>
       </div>
-    </section>
-
-    <!-- EMPRESAS -->
-    <section id="empresas">
-      <h2>Empresas</h2>
-      <p class="sub">Fundar cuesta 500. Cada empresa produce cada día según su nivel.</p>
-      <div class="card" style="margin-bottom:16px">
-        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center">
-          <input id="nombreEmp" placeholder="Nombre de la empresa" maxlength="30">
-          <select id="sectorEmp"></select>
-          <button class="btn" id="fundar">Fundar (500)</button>
+      <div class="naipe ancho">
+        <div class="linea" style="justify-content:space-between">
+          <div><h2>PanchoCoin</h2><p class="nota">La criptomoneda del servidor. Su precio se mueve cada 10 minutos sin ningún motivo.</p></div>
+          <div style="text-align:right"><div class="cifra num" id="pcPrecio">100</div><span class="nota" id="pcCambio"></span></div>
+        </div>
+        <svg class="grafica" id="pcGrafica" viewBox="0 0 600 90" preserveAspectRatio="none" role="img" aria-label="Evolución del precio"></svg>
+        <p class="nota" id="pcTengo"></p>
+        <div class="linea sep">
+          <input type="number" min="1" id="pcGasto" placeholder="Cuánto gastar" style="width:150px">
+          <button class="btn oro" data-do="pcComprar">Comprar</button>
+          <span style="flex:1"></span>
+          <input type="number" min="0" step="0.0001" id="pcVenta" placeholder="Cuántos vender" style="width:170px">
+          <button class="btn mini claro" data-do="todo" data-en="pcVenta" data-de="cripto">Todo</button>
+          <button class="btn" data-do="pcVender">Vender</button>
         </div>
       </div>
-      <div class="grid" id="listaEmp"></div>
-    </section>
+    </div>
+  </section>
 
-    <!-- MERCADO OSCURO -->
-    <section id="oscuro">
-      <div class="dark-wrap">
-        <h2>&gt; MERCADO_OSCURO</h2>
-        <p class="muted">Ficción dentro del juego.</p>
-        <div class="grid two" style="margin-top:14px">
-          <div>
-            <div class="muted">Dinero sucio</div>
-            <div class="neon" id="sucioGrande">0 💰</div>
-            <button class="btn" id="trabajoSucio">Trabajo sucio</button>
-            <div class="barra neon"><i id="barSucio"></i></div>
-          <div class="muted" id="cdSucio" style="margin-top:8px"></div>
-          </div>
-          <div>
-            <div class="muted">Blanquear</div>
-            <div style="display:flex; gap:8px; margin-top:6px; flex-wrap:wrap">
-              <input id="montoLavar" type="number" min="1" placeholder="Cantidad" style="width:140px">
-              <button class="btn neon" id="lavar">Lavar</button>
+  <!-- ================= TIENDA ================= -->
+  <section id="tienda" class="copas">
+    <div class="titulo"><h1>Tienda</h1><p>Cosas útiles y cosas para fastidiar. Todos los precios llevan el IVA del gobernador.</p></div>
+    <div class="rejilla">
+      <div class="naipe"><h2>🔒 Candado</h2><p class="nota">24 horas sin que nadie pueda robarte lo que llevas en mano.</p><p class="nota" id="estCandado"></p>
+        <button class="btn oro sep" data-do="comprar" data-item="candado">Comprar por <span data-precio="precio_candado"></span></button></div>
+      <div class="naipe"><h2>⚖️ Abogado</h2><p class="nota">7 días con la mitad de riesgo de que Hacienda te pille blanqueando, y puede tumbar chivatazos.</p><p class="nota" id="estEscudo"></p>
+        <button class="btn oro sep" data-do="comprar" data-item="escudo">Contratar por <span data-precio="precio_escudo"></span></button></div>
+      <div class="naipe"><h2>🥧 Tartazo</h2><p class="nota">La próxima vez que entre, le salta una tarta a pantalla completa con tu mensaje.</p>
+        <div class="pila sep"><select class="quien" id="taQuien"></select><input id="taTexto" maxlength="80" placeholder="Mensaje (opcional)">
+        <div><button class="btn rojo" data-do="comprar" data-item="tarta" data-quien="taQuien" data-texto="taTexto">Estampar por <span data-precio="precio_tarta"></span></button></div></div></div>
+      <div class="naipe"><h2>🏷️ Mote</h2><p class="nota">Le pones un mote que sale junto a su nombre durante 24 horas. Para quitárselo tiene que pagar.</p>
+        <div class="pila sep"><select class="quien" id="moQuien"></select><input id="moTexto" maxlength="24" placeholder="El mote">
+        <div><button class="btn rojo" data-do="comprar" data-item="mote" data-quien="moQuien" data-texto="moTexto">Bautizar por <span data-precio="precio_mote"></span></button></div></div></div>
+      <div class="naipe"><h2>🕵️ Chivatazo a Hacienda</h2><p class="nota">Denuncia anónima. Si tiene dinero sucio o blanqueos en marcha, se los confiscan y te llevas un 10 %. Si está limpio, pierdes lo pagado.</p>
+        <div class="pila sep"><select class="quien" id="chQuien"></select>
+        <div><button class="btn rojo" data-do="comprar" data-item="chivatazo" data-quien="chQuien">Denunciar por <span data-precio="precio_chivatazo"></span></button></div></div></div>
+      <div class="naipe" id="cajaQuitamote" hidden><h2>🧼 Quitarte el mote</h2><p class="nota" id="txtQuitamote"></p>
+        <button class="btn oro sep" data-do="comprar" data-item="quitamote">Pagar <span data-precio="precio_quitamote"></span></button></div>
+    </div>
+  </section>
+
+  <!-- ================= GENTE ================= -->
+  <section id="gente" class="copas">
+    <div class="titulo"><h1>Gente</h1><p>Toca a alguien para enviarle dinero, robarle o hacerle la vida un poco peor.</p></div>
+    <div class="rejilla">
+      <div class="naipe"><h2>Los más ricos</h2><p class="nota">Cuenta el dinero limpio: en mano y en el banco.</p><div id="listaGente" class="sep"></div></div>
+      <div class="naipe"><h2>Los que más hablan</h2><p class="nota">Mensajes escritos en Discord.</p><div id="listaChat" class="sep"></div></div>
+    </div>
+  </section>
+
+  <!-- ================= BAJOS FONDOS ================= -->
+  <section id="fondos" class="espadas">
+    <div class="titulo"><h1>Bajos fondos</h1><p>Aquí se gana más rápido, pero es dinero sucio y de vez en cuando se acaba en la cárcel.</p></div>
+    <div class="rejilla">
+      <div class="naipe noche">
+        <h2>Dinero sucio</h2>
+        <div class="cifra num" id="fSucio">0</div>
+        <div class="linea sep">
+          <button class="btn azul" data-rpc="trabajo_sucio" id="bSucio">Hacer un trabajito</button>
+          <span class="nota" id="cdSucio"></span>
+        </div>
+        <div class="barra sep"><i id="barSucio"></i></div>
+        <p class="nota sep" id="txtSucio"></p>
+      </div>
+      <div class="naipe noche">
+        <h2>Blanquear</h2>
+        <p class="nota" id="txtLavar"></p>
+        <div class="linea sep">
+          <input type="number" min="1" id="mLavar" placeholder="Cantidad">
+          <button class="btn mini" data-do="todo" data-en="mLavar" data-de="sucio">Todo</button>
+          <button class="btn azul" data-do="lavar">Blanquear</button>
+        </div>
+        <div id="lavados" class="sep"></div>
+      </div>
+      <div class="naipe noche">
+        <h2>Robar a alguien</h2>
+        <p class="nota" id="txtRobar"></p>
+        <div class="pila sep">
+          <select class="quien" id="rQuien" data-mano="1"></select>
+          <div class="linea"><button class="btn azul" data-do="robar" id="bRobar">Robar</button><span class="nota" id="cdRobar"></span></div>
+        </div>
+      </div>
+      <div class="naipe noche">
+        <h2>Sabotaje</h2>
+        <p class="nota" id="txtSabotaje"></p>
+        <div class="pila sep">
+          <select class="quien" id="sQuien"></select>
+          <div><button class="btn azul" data-do="sabotear">Sabotear</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= AYUNTAMIENTO ================= -->
+  <section id="ayto" class="bastos">
+    <div class="titulo"><h1>Ayuntamiento</h1><p id="txtRecuento"></p></div>
+    <div class="rejilla">
+      <div class="naipe">
+        <p class="nota">Gobierna</p>
+        <h2 id="gNombre" style="font-size:30px"></h2>
+        <div class="fila dato sep"><span>Tesoro público</span><b class="num" id="gTesoro"></b></div>
+        <div class="fila dato"><span>Renta <small class="nota">sobre sueldos y beneficios</small></span><b id="gRenta"></b></div>
+        <div class="fila dato"><span>Sociedades <small class="nota">sobre lo que producen las empresas</small></span><b id="gSoc"></b></div>
+        <div class="fila dato"><span>IVA <small class="nota">sobre todo lo que compras</small></span><b id="gIva"></b></div>
+        <div class="fila dato"><span>Auditoría <small class="nota">cuánto vigila Hacienda</small></span><b id="gAud"></b></div>
+      </div>
+      <div class="naipe">
+        <h2>Candidatos de esta semana</h2>
+        <div id="candidatos" class="sep"></div>
+      </div>
+      <div class="naipe" id="cajaPresentarse">
+        <h2>Presentarte</h2>
+        <p class="nota" id="txtPresentarse"></p>
+        <div class="linea sep">
+          <label class="campo">Renta<input type="number" min="0" id="pRenta" class="corto"></label>
+          <label class="campo">Sociedades<input type="number" min="0" id="pSoc" class="corto"></label>
+          <label class="campo">IVA<input type="number" min="0" id="pIva" class="corto"></label>
+        </div>
+        <label class="campo sep">Lema de campaña<input id="pLema" maxlength="80" placeholder="Menos impuestos, más kebabs"></label>
+        <button class="btn oro sep" data-do="presentarse">Presentar candidatura</button>
+      </div>
+      <div class="naipe ancho" id="cajaGobernador" hidden>
+        <h2>Despacho del gobernador</h2>
+        <p class="nota">Solo lo ves tú mientras gobiernes.</p>
+        <div class="rejilla sep" style="gap:22px">
+          <div class="pila">
+            <h3>Impuestos</h3>
+            <div class="linea">
+              <label class="campo">Renta<input type="number" min="0" id="iRenta" class="corto"></label>
+              <label class="campo">Sociedades<input type="number" min="0" id="iSoc" class="corto"></label>
+              <label class="campo">IVA<input type="number" min="0" id="iIva" class="corto"></label>
             </div>
-            <div class="muted" style="margin-top:8px">Tarda 5 días y pierdes el 30 %. Si te pillan, pierdes lo que lavabas.</div>
+            <div><button class="btn oro" data-do="gobImpuestos" id="bGobImp">Cambiar impuestos</button></div>
+            <p class="nota" id="txtGobImp"></p>
+            <h3>Auditoría</h3>
+            <div class="linea"><input type="number" min="0" max="30" id="iAud" class="corto"><button class="btn" data-do="gobAuditoria">Fijar</button></div>
+            <p class="nota">De 0 a 30. Cuanto más alta, más fácil es pillar a quien blanquea.</p>
+          </div>
+          <div class="pila">
+            <h3>Decreto</h3>
+            <input id="iDecreto" maxlength="140" placeholder="Queda prohibido ser pobre">
+            <div><button class="btn" data-do="gobDecreto">Publicar</button></div>
+            <p class="nota">Sale arriba del todo para todos los jugadores. Déjalo vacío para retirarlo.</p>
+            <h3>Paga extra</h3>
+            <div class="linea"><input type="number" min="1" id="iPaga" placeholder="Por cabeza"><button class="btn oro" data-do="gobPaga">Repartir</button></div>
+            <p class="nota" id="txtPaga"></p>
+            <h3>Meter la mano en la caja</h3>
+            <div class="linea"><input type="number" min="1" id="iMalversar" placeholder="Cantidad"><button class="btn rojo" data-do="gobMalversar" id="bMalversar">Llevártelo</button></div>
+            <p class="nota" id="txtMalversar"></p>
           </div>
         </div>
-        <div style="margin-top:18px">
-          <div class="row"><div><strong>Abogado de confianza</strong><div class="muted">Reduce a la mitad el riesgo de auditoría 7 días. Coste 300.</div></div><button class="btn alt" id="escudo">Contratar</button></div>
-          <div class="row"><div><strong>Compra de votos</strong><div class="muted">Disponible cuando haya más jugadores.</div></div><button class="btn alt" disabled>Próximamente</button></div>
-        </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- GOBIERNO -->
-    <section id="gobierno">
-      <h2>Gobierno</h2>
-      <p class="sub">Una elección cada semana. Solo cuentan los votos de jugadores.</p>
-      <div class="grid two">
-        <div class="card">
-          <div class="label">Gobernador</div>
-          <div style="font-size:24px; font-weight:800; margin:6px 0 12px" id="govNombre"></div>
-          <div id="ajustes"></div>
-        </div>
-        <div class="card">
-          <div class="label">Candidatos de esta semana</div>
-          <div id="candidatos" style="margin:10px 0"></div>
-          <button class="btn alt" id="presentarme">Presentarme (200)</button>
-        </div>
-      </div>
-    </section>
+  <!-- ================= ADMIN ================= -->
+  <section id="admin" class="bastos">
+    <div class="titulo"><h1>Admin</h1><p>Solo lo ves tú. Aquí se toca todo.</p></div>
+    <div class="subtabs" id="subtabs">
+      <button data-panel="aJug" class="activa">Jugadores</button>
+      <button data-panel="aEco">Economía</button>
+      <button data-panel="aGob">Gobierno y eventos</button>
+      <button data-panel="aNot">Noticias y mensajes</button>
+      <button data-panel="aBot">Bot de Discord</button>
+      <button data-panel="aPel">Zona peligrosa</button>
+    </div>
 
-    <!-- CHAT -->
-    <section id="chat">
-      <h2>Chat</h2>
-      <p class="sub">Ganas 1 moneda por cada mensaje que escribes en el servidor de Discord.</p>
-      <div class="grid two">
-        <div class="card">
-          <div class="label">Tus monedas de chat</div>
-          <div class="big" id="misMonedas">0 💬</div>
-          <div class="muted">Se actualiza solo cada 20 segundos mientras miras esta pestaña.</div>
-        </div>
-        <div class="card">
-          <div class="label">Ranking del chat</div>
-          <div id="rankingChat" style="margin-top:10px"></div>
-        </div>
+    <div class="panel activa" id="aJug">
+      <div class="naipe">
+        <div class="linea" style="justify-content:space-between"><h2>Jugadores</h2><button class="btn mini claro" data-do="adminCargar">Actualizar</button></div>
+        <div class="tabla sep"><table><thead><tr><th>Nombre</th><th class="n">En mano</th><th class="n">Banco</th><th class="n">Sucio</th><th class="n">Nivel</th><th>Estado</th><th></th></tr></thead><tbody id="tJug"></tbody></table></div>
       </div>
-    </section>
+      <div class="naipe sep">
+        <h2>A todos a la vez</h2>
+        <div class="linea sep">
+          <input type="number" id="adLluvia" placeholder="Cantidad">
+          <button class="btn oro" data-do="adLluvia" data-signo="1">Regalar a todos</button>
+          <button class="btn rojo" data-do="adLluvia" data-signo="-1">Quitar a todos</button>
+        </div>
+        <p class="nota sep">Sale una noticia: lluvia de monedas o impuesto revolucionario.</p>
+      </div>
+    </div>
 
-    <!-- VOZ (solo dueño) -->
-    <section id="voz">
-      <h2>Voz del bot</h2>
-      <p class="sub">Escribe aquí y el bot lo dice en su canal de voz.</p>
-      <div class="card">
-        <textarea id="textoVoz" maxlength="200" rows="3" placeholder="Lo que quieres que diga…"></textarea>
-        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:12px">
-          <button class="btn" id="enviarVoz">🗣️ Decir</button>
-          <button class="btn stop" onclick="pararSonido()">⏹ Parar</button>
-          <span class="muted" id="cuentaVoz">0 / 200</span>
-          <span class="muted">· Ctrl+Enter para enviar</span>
+    <div class="panel" id="aEco">
+      <div class="naipe">
+        <div class="linea" style="justify-content:space-between"><h2>Todos los números del juego</h2><button class="btn mini claro" data-do="adAjustesReset">Volver a los valores de fábrica</button></div>
+        <p class="nota">Cambia un número y sal de la casilla: se guarda solo. Entre paréntesis, el valor de fábrica.</p>
+        <div id="ajustes" class="sep"></div>
+      </div>
+      <div class="naipe sep">
+        <h2>Sectores de empresas</h2>
+        <p class="nota">La base es lo que produce al día una empresa de nivel 1, antes de impuestos.</p>
+        <div id="sectores" class="sep"></div>
+        <div class="linea sep">
+          <input id="secIcono" maxlength="4" placeholder="🏢" class="corto"><input id="secNombre" maxlength="30" placeholder="Sector nuevo"><input type="number" min="0" id="secBase" placeholder="Base">
+          <button class="btn oro" data-do="adSector">Añadir</button>
         </div>
       </div>
-      <div class="card" style="margin-top:16px">
-        <div class="label">Frases rápidas</div>
-        <div class="chips" id="frases" style="margin-top:10px"></div>
-        <div class="label" style="margin-top:16px">Lo último que has dicho</div>
-        <div class="chips" id="historialVoz" style="margin-top:10px"></div>
-      </div>
-    </section>
+    </div>
 
-    <!-- SONIDOS (solo dueño) -->
-    <section id="sonidos">
-      <h2>Sonidos</h2>
-      <p class="sub">Pulsa uno y el bot lo suena en su canal de voz.</p>
-      <div class="mando">
-        <input id="buscarSonido" type="search" placeholder="Buscar sonido…" aria-label="Buscar sonido">
-        <button class="btn stop" id="pararBtn" onclick="pararSonido()" title="Tecla Esc">⏹ Parar</button>
-        <div class="sonando" id="sonando">🔊 manda el sonido a Discord · ▶ lo escuchas solo tú aquí · ☆ favorito · Esc para parar</div>
-      </div>
-      <div class="sonidos" id="botonesSonidos"></div>
-      <h3 style="margin:26px 0 10px">Tus mp3</h3>
-      <div class="card">
-        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center">
-          <input type="file" id="fileSonido" accept=".mp3,audio/mpeg">
-          <button class="btn" id="subirSonidoBtn">⬆️ Subir mp3</button>
-          <span class="muted">Máximo 2 MB.</span>
+    <div class="panel" id="aGob">
+      <div class="rejilla">
+        <div class="naipe">
+          <h2>Gobierno</h2>
+          <div class="linea sep">
+            <label class="campo">Tesoro<input type="number" min="0" id="agTesoro"></label>
+            <label class="campo">Bote de lotería<input type="number" min="0" id="agBote"></label>
+          </div>
+          <div class="linea sep">
+            <label class="campo">Renta<input type="number" min="0" max="100" id="agRenta" class="corto"></label>
+            <label class="campo">Sociedades<input type="number" min="0" max="100" id="agSoc" class="corto"></label>
+            <label class="campo">IVA<input type="number" min="0" max="100" id="agIva" class="corto"></label>
+            <label class="campo">Auditoría<input type="number" min="0" max="100" id="agAud" class="corto"></label>
+          </div>
+          <label class="campo sep">Decreto<input id="agDecreto" maxlength="140"></label>
+          <div class="linea sep"><button class="btn oro" data-do="adGobierno">Guardar</button></div>
+          <p class="nota sep">Guardar también le devuelve al gobernador su cambio de impuestos semanal.</p>
+        </div>
+        <div class="naipe">
+          <h2>Gobernador</h2>
+          <p class="nota" id="agQuien"></p>
+          <div class="linea sep"><select id="agNuevo"></select><button class="btn oro" data-do="adGobernador">Nombrar a dedo</button></div>
+          <div class="linea sep">
+            <button class="btn" data-do="adElecciones">Contar los votos ya</button>
+            <button class="btn rojo" data-do="adVacante">Destituir</button>
+          </div>
+        </div>
+        <div class="naipe">
+          <h2>Eventos</h2>
+          <p class="nota" id="agEvento"></p>
+          <div class="linea sep"><select id="evClave"></select><label class="campo">Horas<input type="number" min="1" max="720" value="24" id="evHoras" class="corto"></label></div>
+          <p class="nota sep" id="evTexto"></p>
+          <div class="linea sep"><button class="btn oro" data-do="adEvento">Lanzar</button><button class="btn" data-do="adEventoFin">Terminar el actual</button></div>
+        </div>
+        <div class="naipe">
+          <h2>Reloj y mercado</h2>
+          <div class="linea sep"><label class="campo">Adelantar días<input type="number" min="1" max="30" value="1" id="adDias" class="corto"></label><button class="btn" data-do="adDia">Adelantar</button></div>
+          <p class="nota">Pasan de golpe: producen las empresas, se sortea la lotería y, si toca, hay elecciones.</p>
+          <div class="linea sep"><label class="campo">Precio de PanchoCoin<input type="number" min="1" id="adCripto"></label><button class="btn" data-do="adCripto">Fijar</button></div>
         </div>
       </div>
-      <div class="sonidos" id="subidos" style="margin-top:14px"></div>
-    </section>
+    </div>
 
-    <!-- RANKING -->
-    <section id="ranking">
-      <h2>Ranking</h2>
-      <p class="sub">Saldo limpio de los jugadores. Se actualiza solo.</p>
-      <div class="podio" id="podio"></div>
-      <div class="card" id="listaRanking"></div>
-    </section>
-  </div>
+    <div class="panel" id="aNot">
+      <div class="rejilla">
+        <div class="naipe">
+          <h2>Publicar una noticia</h2>
+          <div class="pila sep">
+            <div class="linea"><input id="noIcono" maxlength="4" value="📰" class="corto" aria-label="Icono"><input id="noTitulo" maxlength="80" placeholder="Titular" style="flex:1"></div>
+            <textarea id="noTexto" maxlength="300" rows="3" placeholder="Texto"></textarea>
+            <label class="linea"><input type="checkbox" id="noFija"> Dejarla fija arriba</label>
+            <div><button class="btn oro" data-do="adNoticia">Publicar</button></div>
+          </div>
+        </div>
+        <div class="naipe">
+          <h2>Megafonía</h2>
+          <p class="nota">Un aviso para todos los jugadores, o para uno solo desde la tabla de jugadores.</p>
+          <div class="pila sep">
+            <textarea id="meTexto" maxlength="200" rows="3" placeholder="Mensaje"></textarea>
+            <div class="linea"><button class="btn oro" data-do="adAviso" data-tipo="info">Enviar aviso</button><button class="btn rojo" data-do="adAviso" data-tipo="tarta">Tartazo a todos</button></div>
+          </div>
+        </div>
+        <div class="naipe ancho">
+          <div class="linea" style="justify-content:space-between"><h2>Noticias publicadas</h2><button class="btn mini claro" data-do="adNoticiasAuto">Borrar las automáticas</button></div>
+          <div id="adNoticias" class="sep"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="aBot">
+      <div class="rejilla">
+        <div class="naipe">
+          <h2>Voz del bot</h2>
+          <p class="nota">Lo que escribas lo dice el bot en su canal de voz.</p>
+          <textarea id="textoVoz" maxlength="200" rows="3" placeholder="Lo que quieres que diga" class="sep"></textarea>
+          <div class="linea sep"><button class="btn oro" id="enviarVoz">Decir</button><button class="btn rojo" data-do="pararSonido">Parar</button><span class="nota" id="cuentaVoz">0 / 200</span></div>
+          <p class="nota sep">Frases rápidas</p><div class="chips" id="frases"></div>
+          <p class="nota sep">Lo último que has dicho</p><div class="chips" id="historialVoz"></div>
+        </div>
+        <div class="naipe">
+          <h2>Monedas de chat</h2>
+          <div class="tabla sep"><table><thead><tr><th>Nombre</th><th class="n">Ganadas</th><th class="n">Gastadas</th><th></th></tr></thead><tbody id="tChat"></tbody></table></div>
+        </div>
+        <div class="naipe ancho">
+          <h2>Sonidos</h2>
+          <div class="mando sep">
+            <input id="buscarSonido" type="search" placeholder="Buscar sonido" aria-label="Buscar sonido">
+            <button class="btn rojo" data-do="pararSonido">Parar</button>
+          </div>
+          <p class="nota" id="sonando">El nombre lo manda a Discord, ▶ lo escuchas solo tú y ☆ lo marca como favorito. Esc para parar.</p>
+          <div class="sonidos sep" id="botonesSonidos"></div>
+          <h3 class="sep">Tus mp3</h3>
+          <div class="linea sep"><input type="file" id="fileSonido" accept=".mp3,audio/mpeg"><button class="btn" id="subirSonidoBtn">Subir mp3</button><span class="nota">Máximo 2 MB.</span></div>
+          <div class="sonidos sep" id="subidos"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="aPel">
+      <div class="naipe copas">
+        <h2>Empezar la partida de cero</h2>
+        <p class="nota">Borra el dinero, las empresas, los votos y los avisos de todo el mundo y vuelve al día 1. Los ajustes y las monedas de chat se quedan. No se puede deshacer.</p>
+        <div class="linea sep"><input id="pelConfirmar" placeholder="Escribe BORRAR TODO"><button class="btn rojo" data-do="adResetTodo">Borrar la partida</button></div>
+      </div>
+    </div>
+  </section>
 </main>
-<footer>AMIGUITOS · todo lo que pasa aquí es ficción y dinero de mentira.</footer>
+</div>
+</div>
+
+<!-- Ficha de un jugador -->
+<dialog id="dFicha"><div class="naipe copas">
+  <button class="cerrar" data-do="cerrar" aria-label="Cerrar">✕</button>
+  <h2 id="fNombre"></h2><p class="nota" id="fDatos"></p>
+  <div class="pila sep">
+    <div class="linea"><input type="number" min="1" id="fMonto" placeholder="Cantidad"><button class="btn oro" data-do="fEnviar">Enviar dinero</button></div>
+    <div class="linea"><button class="btn azul" data-do="fRobar">Robarle</button><button class="btn azul" data-do="fSabotear">Sabotear su empresa</button><button class="btn rojo" data-do="fChivar">Chivatazo</button></div>
+    <div class="linea"><input id="fTexto" maxlength="80" placeholder="Mensaje o mote" style="flex:1"><button class="btn rojo" data-do="fTarta">Tartazo</button><button class="btn rojo" data-do="fMote">Mote</button></div>
+    <p class="nota" id="fPrecios"></p>
+  </div>
+</div></dialog>
+
+<!-- Avisos -->
+<dialog id="dAvisos"><div class="naipe">
+  <button class="cerrar" data-do="cerrar" aria-label="Cerrar">✕</button>
+  <h2>Avisos</h2><div id="listaAvisos" class="sep"></div>
+</div></dialog>
+
+<!-- Admin: gestionar un jugador -->
+<dialog id="dAdmin"><div class="naipe bastos">
+  <button class="cerrar" data-do="cerrar" aria-label="Cerrar">✕</button>
+  <h2 id="adjNombre"></h2><p class="nota" id="adjDatos"></p>
+  <div class="pila sep">
+    <div class="linea">
+      <select id="adjCampo"><option value="saldo">En mano</option><option value="banco">Banco</option><option value="sucio">Sucio</option><option value="cripto">PanchoCoin</option><option value="xp">Experiencia</option></select>
+      <input type="number" id="adjValor" placeholder="Valor">
+      <button class="btn oro" data-do="adjDinero" data-sumar="0">Fijar</button><button class="btn" data-do="adjDinero" data-sumar="1">Sumar</button>
+    </div>
+    <p class="nota">Con «Sumar» puedes poner un número negativo para quitar.</p>
+    <div class="linea"><input type="number" min="0" id="adjCarcel" placeholder="Minutos" class="corto"><button class="btn azul" data-do="adjCarcel">Meter en la cárcel</button><button class="btn claro" data-do="adjLibre">Soltar</button></div>
+    <div class="linea"><input id="adjMote" maxlength="24" placeholder="Mote"><button class="btn rojo" data-do="adjMote">Poner mote</button><button class="btn claro" data-do="adjSinMote">Quitar</button></div>
+    <div class="linea"><input id="adjRenombrar" maxlength="30" placeholder="Nombre nuevo"><button class="btn" data-do="adjRenombrar">Cambiar nombre</button></div>
+    <div class="linea"><input id="adjMensaje" maxlength="200" placeholder="Mensaje" style="flex:1"><button class="btn" data-do="adjAviso" data-tipo="info">Aviso</button><button class="btn rojo" data-do="adjAviso" data-tipo="tarta">Tartazo</button></div>
+    <div class="linea">
+      <button class="btn claro" data-do="adjEsperas">Quitarle las esperas</button>
+      <button class="btn claro" data-do="adjGobernador">Hacerle gobernador</button>
+      <button class="btn rojo" data-do="adjBan" id="adjBanBtn">Expulsar</button>
+      <button class="btn rojo" data-do="adjReset">Dejarle a cero</button>
+    </div>
+  </div>
+</div></dialog>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
 // ============ Base ============
 const sb = (window.supabase && SUPABASE_URL.startsWith('http')) ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
-const SECTORES = ['Panadería', 'Tecnología', 'Bar', 'Tienda de memes', 'Taller'];
-const CD_TRABAJO = 20 * 60, CD_SUCIO = 30 * 60; // segundos
-
-// Noticias del servidor: edítalas aquí. Son ficticias.
-const NOTICIAS = [
-  { fecha: 'Semana 1', titulo: 'Abre AMIGUITOS', texto: 'El servidor estrena sim económico. Que gane el mejor estafador.' },
-  { fecha: 'Rumor', titulo: 'Dicen que el abogado conoce a todo el mundo', texto: 'Nadie quiere confirmar cuánto cobra por tapar una auditoría.' }
-];
-
 const $ = id => document.getElementById(id);
 const fmt = n => Math.round(Number(n) || 0).toLocaleString('es-ES');
-// Los nombres los escriben los jugadores: siempre se escapan antes de pintarlos.
+// Los nombres, motes y mensajes los escriben los jugadores: siempre se escapan antes de pintarlos.
 const esc = t => String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const guardado = (k, def) => { try { return JSON.parse(localStorage.getItem(k)) ?? def; } catch (e) { return def; } };
 const guardar = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
-let S = { uid: null, perfil: null, gob: null, dia: 1, mes: 1, candidatos: [], jugadores: 0, dueno: false, monedas: 0, tab: 'inicio' };
+const limpiaErr = e => (e?.message || String(e)).replace(/^ERROR:\s*/, '');
+const TITULOS = ['Becario', 'Becario con contrato', 'Currante', 'Oficial de primera', 'Encargado', 'Jefecillo', 'Jefe', 'Directivo', 'Pez gordo', 'Magnate', 'Leyenda'];
+const titulo = nivel => TITULOS[Math.min(Math.floor(nivel / 2), TITULOS.length - 1)];
 
-function toast(msg, error) {
-  const t = $('toast'); t.textContent = msg; t.classList.toggle('err', !!error); t.classList.add('show');
-  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2800);
+let S = null;          // lo último que devolvió el servidor (función estado)
+let A = null;          // datos del panel de admin
+let desfase = 0;       // diferencia entre el reloj del servidor y el de este navegador
+let tab = 'inicio';
+let fichaId = null, adjId = null;
+
+function toast(msg, tipo) {
+  const t = $('toast'); t.textContent = msg; t.className = 'toast ver' + (tipo ? ' ' + tipo : '');
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('ver'), 4200);
 }
-function reloj(seg) {
-  seg = Math.max(0, Math.ceil(seg));
-  const m = Math.floor(seg / 60), s = seg % 60;
-  return m + ':' + String(s).padStart(2, '0');
+const ahora = () => Date.now() + desfase;
+function reloj(ms) {
+  let s = Math.max(0, Math.ceil(ms / 1000));
+  const h = Math.floor(s / 3600); s -= h * 3600;
+  const m = Math.floor(s / 60); s -= m * 60;
+  return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s).padStart(2, '0');
 }
-const limpiaErr = e => (e.message || String(e)).replace(/^ERROR:\s*/, '');
+const haceCuanto = iso => {
+  const m = Math.floor((ahora() - new Date(iso).getTime()) / 60000);
+  return m < 1 ? 'ahora mismo' : m < 60 ? `hace ${m} min` : m < 1440 ? `hace ${Math.floor(m / 60)} h` : `hace ${Math.floor(m / 1440)} d`;
+};
+const aj = clave => Number(S?.aj?.[clave] ?? 0);
+const conIva = base => Math.round(base * (1 + Number(S.gob.impuestos.iva) / 100));
+const nombreDe = j => esc(j.nombre) + (j.mote ? ` <span class="mote">«${esc(j.mote)}»</span>` : '');
 
 // ============ Sesión ============
 async function entrar() {
-  if (!sb) return toast('Falta configurar Supabase en index.html', true);
+  if (!sb) return toast('Falta configurar Supabase en index.html', 'mal');
   await sb.auth.signInWithOAuth({ provider: 'discord', options: { redirectTo: location.origin + location.pathname } });
 }
-async function salir() { if (sb) await sb.auth.signOut(); location.reload(); }
+async function salir() { if (sb) await sb.auth.signOut(); location.hash = ''; location.reload(); }
 
-// ============ Llamadas al servidor ============
-async function llamar(nombre, args) {
+// ============ Hablar con el servidor ============
+// Llama a una función del juego. Muestra el mensaje que devuelve, o el error, y recarga el estado.
+async function hacer(nombre, args, boton, callado) {
+  boton?.classList.add('ocupado');
   const { data, error } = await sb.rpc(nombre, args || {});
-  if (error) { toast(limpiaErr(error), true); throw error; }
-  return data;
-}
-// El botón que lanza la acción se bloquea mientras dura, para no enviarla dos veces.
-async function accion(nombre, args, msg, boton) {
-  boton = boton || (window.event && window.event.currentTarget instanceof HTMLElement ? window.event.currentTarget : null);
-  boton?.classList.add('busy');
-  try { await llamar(nombre, args); if (msg) toast(msg); await cargar(); } catch (e) {}
-  boton?.classList.remove('busy');
+  boton?.classList.remove('ocupado');
+  if (error) { toast(limpiaErr(error), 'mal'); return null; }
+  if (!callado && data?.msg) toast(data.msg, data.ok === false ? 'mal' : 'bien');
+  await cargar();
+  if (nombre.startsWith('admin_')) await adminCargar();
+  return data ?? {};
 }
 
-// ============ Carga de datos ============
 async function cargar() {
   if (!sb) return;
   const { data: { session } } = await sb.auth.getSession();
-  if (!session) {
-    $('login').style.display = 'block'; $('app').style.display = 'none'; $('tabs').style.display = 'none';
+  if (!session) { $('puerta').hidden = false; $('app').hidden = true; return; }
+  const { data, error } = await sb.rpc('estado');
+  if (error) {
+    // La base de datos aún no tiene la versión nueva: se explica qué falta en vez de romperse.
+    if (!S) {
+      $('puerta').hidden = false; $('app').hidden = true; $('entrar').hidden = true;
+      $('montaje').hidden = false; $('errMontaje').textContent = limpiaErr(error);
+    }
     return;
   }
-  $('login').style.display = 'none'; $('app').style.display = 'block'; $('tabs').style.display = 'flex';
-  S.uid = session.user.id;
-
-  try { await llamar('ponerse_al_dia'); } catch (e) {}
-  const [perfil, gob, dia, jug, dueno, monedas] = await Promise.all([
-    sb.from('perfiles').select('*').eq('id', S.uid).single(),
-    sb.from('gobierno').select('*').eq('id', 1).single(),
-    sb.rpc('dia_actual'),
-    sb.from('ranking').select('nombre', { count: 'exact', head: true }),
-    sb.rpc('soy_dueno'),
-    sb.rpc('mis_monedas_chat')
-  ]);
-  S.perfil = perfil.data; S.gob = gob.data; S.dia = dia.data || 1;
-  S.mes = Math.floor((S.dia - 1) / 7) + 1;
-  S.jugadores = jug.count || 0;
-  S.dueno = !!dueno.data; S.monedas = monedas.data || 0;
-  const cands = await sb.from('candidatos').select('candidato, nombre, plat').eq('mes', S.mes);
-  S.candidatos = cands.data || [];
-  $('tabVoz').style.display = S.dueno ? '' : 'none';
-  $('tabSonidos').style.display = S.dueno ? '' : 'none';
-  render();
-  if (!cargar.hecho) { cargar.hecho = true; irA((location.hash || '#inicio').slice(1), true); }
+  S = data;
+  desfase = new Date(S.ahora).getTime() - Date.now();
+  if (S.yo.baneado) { $('puerta').hidden = false; $('app').hidden = true; $('entrar').hidden = true; $('expulsado').hidden = false; return; }
+  $('puerta').hidden = true; $('app').hidden = false;
+  pintar();
+  if (!cargar.hecho) { cargar.hecho = true; irA((location.hash || '#inicio').slice(1), true); setTimeout(() => $('mano').classList.remove('reparto'), 900); }
 }
 
-// ============ Render ============
-function render() {
-  if (!S.perfil || !S.gob) return;
-  const p = S.perfil, g = S.gob, imp = g.impuestos;
+// ============ Pintar ============
+const pon = (id, txt) => { const e = $(id); if (e && e.textContent !== String(txt)) e.textContent = txt; };
+const ponHtml = (id, html) => { const e = $(id); if (e && e._html !== html) { e.innerHTML = html; e._html = html; } };
+// Rellena una casilla solo si el usuario no la está usando.
+const ponValor = (id, v) => { const e = $(id); if (e && document.activeElement !== e && !e.dataset.tocado) e.value = v; };
 
-  // Cabecera e inicio
-  $('diaTxt').textContent = 'Día ' + S.dia + ' · Semana ' + S.mes;
-  $('saludo').textContent = 'Hola, ' + (p.nombre || 'jugador') + ' 👋';
-  $('stJugadores').textContent = S.jugadores;
-  $('stDia').textContent = S.dia;
-  $('stSemana').textContent = S.mes;
-  $('kSaldo').textContent = fmt(p.saldo) + ' 🪙';
-  $('kSucio').textContent = fmt(p.sucio) + ' 💰';
-  $('kEmp').textContent = (p.empresas || []).length;
-  $('kChat').textContent = fmt(S.monedas) + ' 💬';
-  const diasElec = 7 - ((S.dia - 1) % 7);
-  const vivas = [
-    { fecha: 'Hoy', titulo: 'Gobierna ' + g.gobernador_nombre, texto: `Renta ${imp.renta}% · Sociedades ${imp.sociedades}% · IVA ${imp.iva}% · Auditoría ${g.auditoria}%.` },
-    { fecha: 'Elecciones', titulo: diasElec === 1 ? 'Mañana hay recuento' : `Quedan ${diasElec} días para el recuento`,
-      texto: S.candidatos.length ? 'Se presentan: ' + S.candidatos.map(c => c.nombre).join(', ') + '.' : 'Todavía no se ha presentado nadie. Presentarse cuesta 200.' }
-  ];
-  $('noticias').innerHTML = vivas.concat(NOTICIAS).map(n => `
-    <div class="new"><small>${esc(n.fecha)}</small><div><strong>${esc(n.titulo)}</strong></div><p class="muted">${esc(n.texto)}</p></div>`).join('');
+function pintar() {
+  const y = S.yo, g = S.gob, imp = g.impuestos;
+  const otros = S.jugadores.filter(j => j.id !== y.id);
 
-  // Economía
-  $('saldo').textContent = fmt(p.saldo) + ' 🪙';
-  $('sucio').textContent = 'Dinero sucio: ' + fmt(p.sucio) + ' 💰';
-  $('sucioGrande').textContent = fmt(p.sucio) + ' 💰';
-  $('impuestos').innerHTML = `<span class="chip">Renta ${+imp.renta}%</span><span class="chip">Sociedades ${+imp.sociedades}%</span><span class="chip">IVA ${+imp.iva}%</span>`;
-  $('aud').textContent = g.auditoria;
-  $('govMini').textContent = g.gobernador_nombre;
-  tic();
+  // Cabecera
+  pon('diaTxt', `Día ${S.dia}, semana ${S.mes}`);
+  pon('hMano', fmt(y.saldo)); pon('hBanco', fmt(y.banco)); pon('hSucio', fmt(y.sucio));
+  const sinLeer = S.avisos.filter(a => !a.leido).length;
+  $('nAvisos').hidden = !sinLeer; pon('nAvisos', sinLeer);
+  $('tabAdmin').hidden = !S.dueno;
 
-  // Empresas
-  if (!$('sectorEmp').options.length) $('sectorEmp').innerHTML = SECTORES.map(s => `<option>${s}</option>`).join('');
-  $('listaEmp').innerHTML = (p.empresas || []).map(e => `
-    <div class="card">
-      <h3>${esc(e.nombre)} <span class="muted">· ${esc(e.sector)}</span></h3>
-      <div class="muted" style="margin:6px 0 12px">Nivel ${+e.nivel} · ${e.maq ? '✅ maquinaria' : '⬜ maquinaria (350)'} · ${e.contable ? '✅ contabilidad' : '⬜ contabilidad (250)'} ${e.ilegal ? ' · <span class="bad">ilegal</span>' : ''}</div>
-      <div style="display:flex; gap:6px; flex-wrap:wrap">
-        <button class="btn alt" onclick="accion('mejorar', {p_empresa:'${esc(e.id)}', p_tipo:'nivel'}, 'Nivel subido')">Subir nivel (${300 * e.nivel})</button>
-        ${e.maq ? '' : `<button class="btn alt" onclick="accion('mejorar', {p_empresa:'${esc(e.id)}', p_tipo:'maq'}, 'Maquinaria instalada')">Maquinaria</button>`}
-        ${e.contable ? '' : `<button class="btn alt" onclick="accion('mejorar', {p_empresa:'${esc(e.id)}', p_tipo:'contable'}, 'Contabilidad instalada')">Contabilidad</button>`}
-      </div>
-    </div>`).join('') || '<div class="muted">Todavía no tienes empresas. Funda una arriba.</div>';
+  // Quién: todos los desplegables de jugadores, conservando lo elegido
+  document.querySelectorAll('select.quien').forEach(sel => {
+    const html = otros.length
+      ? otros.map(j => `<option value="${esc(j.id)}">${esc(j.nombre)}${j.mote ? ' «' + esc(j.mote) + '»' : ''}${sel.dataset.mano ? ' (lleva ' + fmt(j.mano) + ')' : ''}</option>`).join('')
+      : '<option value="">Todavía no hay nadie más</option>';
+    if (sel._html !== html) { const v = sel.value; sel.innerHTML = html; sel._html = html; if (v) sel.value = v; }
+  });
+  document.querySelectorAll('[data-precio]').forEach(e => { e.textContent = fmt(conIva(aj(e.dataset.precio))); });
 
-  // Gobierno (no se repinta mientras el gobernador está escribiendo en sus casillas)
-  const soyGob = g.gobernador === S.uid;
-  $('govNombre').textContent = g.gobernador_nombre + (soyGob ? ' · ¡Eres tú! 👑' : '');
-  if (!$('ajustes').contains(document.activeElement)) $('ajustes').innerHTML = soyGob
-    ? `<div class="muted">Puedes cambiar impuestos una vez por semana.</div>
-       <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; align-items:end">
-         ${['renta','sociedades','iva'].map(t => `<label class="muted" style="display:grid; gap:4px">${t}<input type="number" min="0" max="40" value="${+imp[t]}" id="imp-${t}" style="width:100px"></label>`).join('')}
-         <button class="btn alt" onclick="cambiarImpuestos()">Aplicar</button>
-       </div>
-       <div style="display:flex; gap:6px; align-items:center; margin-top:12px; flex-wrap:wrap">
-         <span class="muted">Auditoría %</span>
-         <input type="number" min="0" max="30" value="${+g.auditoria}" id="aud-input" style="width:100px">
-         <button class="btn alt" onclick="accion('cambiar_auditoria', {p_valor: +$('aud-input').value}, 'Auditoría fijada')">Fijar</button>
-       </div>`
-    : '<div class="muted">Los impuestos los fija el gobernador.</div>';
-  $('candidatos').innerHTML = S.candidatos.length
-    ? S.candidatos.map(c => `
-        <div class="row"><div><strong>${esc(c.nombre)}</strong><div class="muted">Renta ${+c.plat.renta}% · Sociedades ${+c.plat.sociedades}% · IVA ${+c.plat.iva}%</div></div>
-        <button class="btn alt" onclick="accion('votar', {p_candidato:'${esc(c.candidato)}'}, 'Voto registrado')">Votar</button></div>`).join('')
-    : '<div class="muted">Nadie se ha presentado esta semana.</div>';
-  $('presentarme').disabled = S.candidatos.some(c => c.candidato === S.uid);
-}
+  // ---- Inicio ----
+  pon('saludo', 'Hola, ' + y.nombre);
+  pon('subSaludo', y.mote ? `Hoy te conocen como «${y.mote}». En la tienda puedes pagar para quitártelo.` : `${titulo(y.nivel)} de nivel ${y.nivel}.`);
+  let fr = '';
+  if (y.en_carcel) fr += `<div class="franja carcel">🚓 Estás en la cárcel. Sales en <span id="cdCarcel"></span>.<button class="btn oro" data-rpc="fianza">Pagar ${fmt(aj('fianza'))} de fianza</button></div>`;
+  if (g.decreto) fr += `<div class="franja decreto">📜 Decreto de ${esc(g.nombre)}: ${esc(g.decreto)}</div>`;
+  if (S.evento) fr += `<div class="franja evento">${esc(S.evento.icono)} ${esc(S.evento.nombre)}: ${esc(S.evento.texto)} <span class="nota" style="color:inherit">Quedan <span id="cdEvento"></span>.</span></div>`;
+  if (y.diario_listo) fr += `<div class="franja decreto">🎁 Tienes la paga de hoy sin cobrar.<button class="btn oro" data-rpc="diario">Cobrarla</button></div>`;
+  ponHtml('franjas', fr);
+  const carta = (palo, clase, nombre, valor, ir) => `
+    <button class="naipe carta ${clase}" data-ir="${ir}"><span class="palo-nombre">${nombre}</span><span class="cifra num">${valor}</span><svg><use href="#p-${palo}"/></svg></button>`;
+  ponHtml('mano',
+    carta('oros', '', 'En mano', fmt(y.saldo), 'trabajo') + carta('copas', 'copas', 'En el banco', fmt(y.banco), 'banco') +
+    carta('espadas', 'espadas noche', 'Dinero sucio', fmt(y.sucio), 'fondos') + carta('bastos', 'bastos', 'Empresas', (y.empresas || []).length, 'empresas'));
+  ponHtml('noticias', S.noticias.map(n => `
+    <div class="noticia${n.fija ? ' fija' : ''}"><div class="ico">${esc(n.icono)}</div><div><b>${esc(n.titulo)}</b><div>${esc(n.texto)}</div><time>${haceCuanto(n.creado)}</time></div></div>`).join('')
+    || '<p class="nota sep">Todavía no ha pasado nada. Sé el primero en liarla.</p>');
+  const filaAviso = a => `<div class="noticia"><div class="ico">${esc(a.icono)}</div><div>${a.leido ? '' : '<span class="sello rojo">nuevo</span> '}${esc(a.texto)}<br><time>${haceCuanto(a.creado)}</time></div></div>`;
+  ponHtml('avisosInicio', S.avisos.slice(0, 4).map(filaAviso).join('') || '<p class="nota sep">Nada nuevo. Cuando te roben, te paguen o te tiren una tarta, saldrá aquí.</p>');
+  ponHtml('listaAvisos', S.avisos.map(filaAviso).join('') || '<p class="nota">No tienes avisos.</p>');
 
-// Cuenta atrás de los trabajos, cada segundo, sin repintar el resto.
-function tic() {
-  const p = S.perfil; if (!p) return;
-  const falta = (ultimo, total) => total - (Date.now() - new Date(ultimo).getTime()) / 1000;
-  const t = falta(p.ultimo_trabajo, CD_TRABAJO), s = falta(p.ultimo_trabajo_sucio, CD_SUCIO);
-  $('trabajar').disabled = t > 0;
-  $('cdTrabajar').textContent = t > 0 ? 'Disponible en ' + reloj(t) : 'Listo para trabajar';
-  $('barTrabajar').style.width = Math.min(100, Math.max(0, (1 - t / CD_TRABAJO) * 100)) + '%';
-  $('kTrabajo').textContent = t > 0 ? '⏳ ' + reloj(t) : '✅ Listo';
-  $('trabajoSucio').disabled = s > 0;
-  $('cdSucio').textContent = s > 0 ? 'Disponible en ' + reloj(s) : 'Listo';
-  $('barSucio').style.width = Math.min(100, Math.max(0, (1 - s / CD_SUCIO) * 100)) + '%';
-}
+  // ---- Trabajo ----
+  const sig = 3 * (y.nivel + 1) ** 2, base = 3 * y.nivel ** 2;
+  pon('tituloNivel', `${titulo(y.nivel)}, nivel ${y.nivel}`);
+  pon('txtNivel', y.nivel >= 20 ? 'Has llegado al nivel máximo.' : `Te faltan ${sig - y.xp} trabajos para subir de nivel. Cada nivel sube tu sueldo un ${aj('bonus_nivel')} %.`);
+  $('barXp').style.width = (y.nivel >= 20 ? 100 : Math.max(0, Math.min(100, (y.xp - base) / (sig - base) * 100))) + '%';
+  const mult = (1 + y.nivel * aj('bonus_nivel') / 100) * (S.evento?.clave === 'huelga' ? 0.5 : S.evento?.clave === 'fiesta' ? 2 : 1);
+  pon('txtSueldo', `Cobras entre ${fmt(aj('sueldo_min') * mult)} y ${fmt(aj('sueldo_max') * mult)} antes del ${imp.renta} % de renta. Puedes volver cada ${aj('cd_trabajo')} min.`);
+  const premio = aj('diario_base') + aj('diario_racha') * Math.min(y.diario_listo ? (y.ultimo_diario === S.dia - 1 ? y.racha : 0) : y.racha - 1, aj('diario_racha_max'));
+  pon('txtDiario', y.diario_listo ? `Hoy te tocan ${fmt(premio)}. Si entras todos los días la racha sube la paga.` : `Ya has cobrado hoy. Llevas ${y.racha} ${y.racha === 1 ? 'día' : 'días'} de racha. Vuelve mañana.`);
+  $('bDiario').disabled = !y.diario_listo;
+  pon('txtCafe', `Te quita el cansancio y puedes volver a trabajar al momento. Cuesta ${fmt(conIva(aj('precio_cafe')))}. Hoy llevas ${y.cafes_hoy} de ${aj('cafes_dia')}.`);
+  $('bCafe').disabled = y.cafes_hoy >= aj('cafes_dia');
+  pon('txtMendigar', `Para cuando estás sin blanca. Caen hasta ${fmt(aj('mendigar_max'))} monedas, si tienes menos de ${fmt(aj('mendigar_tope'))}.`);
 
-async function cambiarImpuestos() {
-  for (const t of ['renta', 'sociedades', 'iva']) {
-    const v = +$('imp-' + t).value;
-    try { await llamar('cambiar_impuesto', { p_tipo: t, p_valor: v }); } catch (e) { return; }
+  // ---- Banco ----
+  pon('bBanco', fmt(y.banco));
+  pon('txtInteres', `Da un ${aj('banco_interes')} % al día sobre los primeros ${fmt(aj('banco_tope'))}. Los intereses salen del tesoro: si está vacío, no hay.`);
+  pon('cLibres', fmt(S.chat.libres));
+  pon('txtCanje', `Sin gastar, de ${fmt(S.chat.total)} ganadas. Cada una vale ${aj('canje_chat')} ${aj('canje_chat') === 1 ? 'moneda' : 'monedas'} del juego.`);
+
+  // ---- Empresas ----
+  const secHtml = S.sectores.map(s => `<option value="${esc(s.nombre)}">${esc(s.icono)} ${esc(s.nombre)} (${fmt(s.base)} al día)</option>`).join('');
+  const eSel = $('eSector'); if (eSel._html !== secHtml) { const v = eSel.value; eSel.innerHTML = secHtml; eSel._html = secHtml; if (v) eSel.value = v; }
+  const emps = y.empresas || [];
+  pon('txtFundar', `Fundar cuesta ${fmt(conIva(aj('coste_fundar')))} con IVA. Tienes ${emps.length} de ${aj('empresas_max')} empresas.`);
+  $('bFundar').disabled = emps.length >= aj('empresas_max');
+  const evProd = S.evento?.clave === 'burbuja' ? 2 : S.evento?.clave === 'crisis' ? 0.5 : 1;
+  ponHtml('listaEmp', emps.map(e => {
+    const sec = S.sectores.find(s => s.nombre === e.sector), b = sec ? Number(sec.base) : 30;
+    const bruto = b * e.nivel * (e.maq ? 1.25 : 1) * aj('prod_pct') / 100 * evProd;
+    const soc = Math.max(0, Number(imp.sociedades) - (e.contable ? 5 : 0));
+    const neto = bruto * (1 - soc / 100) * (1 - Number(imp.renta) / 100);
+    const sab = (e.sab || 0) >= S.dia;
+    const id = esc(e.id);
+    return `<div class="naipe">
+      <h2>${esc(sec?.icono || '🏢')} ${esc(e.nombre)}</h2>
+      <p class="nota">${esc(e.sector)}, nivel ${e.nivel}${e.nivel >= aj('nivel_max') ? ' (máximo)' : ''}</p>
+      <div class="cifra num sep">${sab ? '0' : '+' + fmt(neto)}<span class="nota" style="font-size:15px; letter-spacing:0"> limpias al día${e.ilegal && !sab ? ' y +' + fmt(bruto * 0.4) + ' sucias' : ''}</span></div>
+      ${sab ? `<p class="sep"><span class="sello rojo">saboteada</span> No produce hasta el día ${e.sab + 1}.</p>` : ''}
+      <div class="linea sep">
+        ${e.nivel < aj('nivel_max') ? `<button class="btn mini oro" data-do="mejorar" data-emp="${id}" data-tipo="nivel">Subir nivel, ${fmt(conIva(aj('coste_nivel') * e.nivel))}</button>` : ''}
+        ${e.maq ? '<span class="sello verde">maquinaria</span>' : `<button class="btn mini" data-do="mejorar" data-emp="${id}" data-tipo="maq" title="Produce un 25 % más">Maquinaria, ${fmt(conIva(aj('coste_maq')))}</button>`}
+        ${e.contable ? '<span class="sello verde">contable</span>' : `<button class="btn mini" data-do="mejorar" data-emp="${id}" data-tipo="contable" title="Paga 5 puntos menos de sociedades">Contable, ${fmt(conIva(aj('coste_contable')))}</button>`}
+        ${e.ilegal ? '<span class="sello azul">contabilidad B</span>' : `<button class="btn mini azul" data-do="mejorar" data-emp="${id}" data-tipo="ilegal" title="Un 40 % extra sin impuestos, pero en dinero sucio">Contabilidad B, ${fmt(conIva(aj('coste_ilegal')))}</button>`}
+        <button class="btn mini claro" data-do="vender" data-emp="${id}" data-nombre="${esc(e.nombre)}">Vender</button>
+      </div></div>`;
+  }).join('') || '<div class="naipe"><p>Todavía no tienes empresas. Funda la primera arriba: es dinero que entra aunque no juegues.</p></div>');
+
+  // ---- Casino ----
+  pon('txtRuleta', `Cinco de cada seis veces ganas un ${aj('ruleta_premio')} % de lo que llevas en mano (ahora ${fmt(Math.min(y.saldo * aj('ruleta_premio') / 100, aj('apuesta_max') * 2))}). La sexta lo pierdes todo: ${fmt(y.saldo)}.`);
+  pon('lBote', fmt(g.bote));
+  pon('txtLoteria', `Monedas en el bote. Cada boleto cuesta ${fmt(aj('loteria_precio'))}. Tienes ${S.loteria.mios} de ${S.loteria.total} vendidos. Se sortea al cambiar de día.`);
+  const h = (S.mercado.historial || []).map(Number), precio = Number(S.mercado.precio);
+  pon('pcPrecio', precio.toLocaleString('es-ES', { maximumFractionDigits: 2 }));
+  if (h.length > 1) {
+    const cambio = (precio / h[0] - 1) * 100;
+    pon('pcCambio', `${cambio >= 0 ? '▲' : '▼'} ${Math.abs(cambio).toFixed(1)} % en ${h.length < 7 ? (h.length - 1) * 10 + ' min' : Math.round((h.length - 1) / 6) + ' h'}`);
+    $('pcCambio').style.color = cambio >= 0 ? 'var(--bastos)' : 'var(--copas)';
+    const min = Math.min(...h), max = Math.max(...h), r = max - min || 1;
+    const pts = h.map((v, i) => `${(i / (h.length - 1) * 600).toFixed(1)},${(84 - (v - min) / r * 78).toFixed(1)}`).join(' ');
+    ponHtml('pcGrafica', `<polyline points="0,90 ${pts} 600,90" fill="${cambio >= 0 ? '#2c8a4b33' : '#d42a3c33'}" stroke="none"/><polyline points="${pts}" fill="none" stroke="${cambio >= 0 ? '#2c8a4b' : '#d42a3c'}" stroke-width="2.5" vector-effect="non-scaling-stroke"/>`);
   }
-  document.activeElement?.blur();
-  toast('Impuestos actualizados'); await cargar();
+  pon('pcTengo', Number(y.cripto) > 0 ? `Tienes ${Number(y.cripto)} PanchoCoin, que ahora valen ${fmt(y.cripto * precio)}. La comisión es del ${aj('cripto_comision')} %.` : `No tienes ninguno. La comisión al comprar y al vender es del ${aj('cripto_comision')} %.`);
+
+  // ---- Tienda ----
+  const candado = new Date(y.candado_hasta).getTime() - ahora();
+  pon('estCandado', candado > 0 ? `Tienes uno puesto: le quedan ${reloj(candado)}.` : 'Ahora mismo no tienes ninguno.');
+  pon('estEscudo', y.escudo_hasta > S.dia ? `Tienes abogado hasta el día ${y.escudo_hasta}.` : 'Ahora mismo no tienes abogado.');
+  $('cajaQuitamote').hidden = !y.mote;
+  if (y.mote) pon('txtQuitamote', `Alguien te ha puesto «${y.mote}». Se va solo en 24 horas, o pagas y te lo quitas ya.`);
+
+  // ---- Gente ----
+  ponHtml('listaGente', S.jugadores.map((j, i) => `
+    <button class="persona${j.id === y.id ? ' yo' : ''}" data-do="ficha" data-id="${esc(j.id)}">
+      <span class="pos">${i + 1}</span>
+      <span><b>${nombreDe(j)}</b>${j.id === g.gobernador ? ' 👑' : ''}${j.carcel ? ' <span class="sello azul">en la cárcel</span>' : ''}
+        <small>${esc(titulo(j.nivel))}, lleva ${fmt(j.mano)} en mano${j.empresas ? ', ' + j.empresas + (j.empresas === 1 ? ' empresa' : ' empresas') : ''}</small></span>
+      <b class="num">${fmt(j.rico)}</b>
+    </button>`).join(''));
+
+  // ---- Bajos fondos ----
+  pon('fSucio', fmt(y.sucio));
+  pon('txtSucio', `Sacas entre ${fmt(aj('sucio_min'))} y ${fmt(aj('sucio_max'))} sucias. Sale mal ${aj('sucio_fallo')} de cada 100 veces y pagas hasta ${fmt(aj('sucio_multa'))} de multa.`);
+  pon('txtLavar', `Tarda ${aj('lavado_dias')} días y pierdes un ${aj('lavado_comision')} % de comisión. Cada día Hacienda puede pillarte: te quita lo que lavabas y un ${aj('multa_pct')} % de lo que lleves en mano.`);
+  ponHtml('lavados', (y.lavados || []).map(l => `<div class="fila"><span>${fmt(l.monto)} en la lavadora</span><span class="nota">${l.dias === 1 ? 'sale mañana' : 'faltan ' + l.dias + ' días'}</span></div>`).join(''));
+  pon('txtRobar', `Sale bien ${aj('robo_exito')} de cada 100 veces y te llevas hasta un ${aj('robo_pct')} % de lo que lleve en mano, como dinero sucio. Si te pillan, le pagas ${fmt(aj('robo_multa'))} y vas ${aj('carcel_min')} min a la cárcel.`);
+  pon('txtSabotaje', `Por ${fmt(aj('sabotaje_coste'))} sucias, una de sus empresas deja de producir ${aj('sabotaje_dias')} días. Te pueden pillar ${aj('sabotaje_riesgo')} de cada 100 veces.`);
+
+  // ---- Ayuntamiento ----
+  const falta = 8 - S.dia_semana;
+  pon('txtRecuento', `Cada semana se elige gobernador. ${falta === 1 ? 'Mañana se cuentan los votos.' : `Quedan ${falta} días para contar los votos.`}`);
+  pon('gNombre', g.nombre); pon('gTesoro', fmt(g.tesoro));
+  pon('gRenta', imp.renta + ' %'); pon('gSoc', imp.sociedades + ' %'); pon('gIva', imp.iva + ' %'); pon('gAud', g.auditoria + ' %');
+  const soyCandidato = S.candidatos.some(c => c.id === y.id);
+  ponHtml('candidatos', S.candidatos.map(c => `
+    <div class="fila"><div><b>${esc(c.nombre)}</b>${S.mi_voto === c.id ? ' <span class="sello verde">tu voto</span>' : ''}
+      <div class="nota">${c.lema ? '«' + esc(c.lema) + '» ' : ''}Renta ${+c.plat.renta} %, sociedades ${+c.plat.sociedades} %, IVA ${+c.plat.iva} %.</div></div>
+      <div class="linea">
+        <button class="btn mini oro" data-do="votar" data-id="${esc(c.id)}" ${S.mi_voto ? 'disabled' : ''}>Votar</button>
+        <button class="btn mini azul" data-do="comprarVotos" data-id="${esc(c.id)}" data-nombre="${esc(c.nombre)}" title="Con dinero sucio">Comprarle votos</button>
+      </div></div>`).join('') || '<p class="nota">Nadie se ha presentado todavía. Si no hay candidatos, sigue el gobernador actual.</p>');
+  $('cajaPresentarse').hidden = soyCandidato;
+  pon('txtPresentarse', `Cuesta ${fmt(aj('coste_candidato'))}. Si ganas, se aplican los impuestos de tu programa (como mucho ${aj('impuesto_max')} %).`);
+  ponValor('pRenta', imp.renta); ponValor('pSoc', imp.sociedades); ponValor('pIva', imp.iva);
+  const soyGob = g.gobernador === y.id;
+  $('cajaGobernador').hidden = !soyGob;
+  if (soyGob) {
+    ponValor('iRenta', imp.renta); ponValor('iSoc', imp.sociedades); ponValor('iIva', imp.iva); ponValor('iAud', g.auditoria); ponValor('iDecreto', g.decreto);
+    $('bGobImp').disabled = g.cambios >= 1;
+    pon('txtGobImp', g.cambios >= 1 ? 'Ya los has cambiado esta semana.' : `Un cambio por semana. Máximo ${aj('impuesto_max')} % cada uno.`);
+    pon('txtPaga', `Sale del tesoro. Sois ${S.jugadores.length}: con ${fmt(g.tesoro)} llega para ${fmt(Math.floor(g.tesoro / S.jugadores.length))} por cabeza.`);
+    $('bMalversar').disabled = g.malversado_hoy;
+    pon('txtMalversar', g.malversado_hoy ? 'Hoy ya lo has intentado. Mañana más.' : `Hasta ${fmt(Math.floor(g.tesoro * aj('malversar_pct') / 100))} al día, como dinero sucio. Te pillan ${aj('malversar_riesgo')} de cada 100 veces: pierdes el cargo y vas 2 horas a la cárcel.`);
+  }
+
+  tic();
+  tartazos();
 }
 
-// ============ Ranking ============
-const MEDALLAS = ['🥇', '🥈', '🥉'];
-function filaRanking(r, i, valor, icono) {
-  const yo = S.perfil && r.nombre === S.perfil.nombre;
-  return `<div class="row${yo ? ' yo' : ''}"><span>${MEDALLAS[i] || (i + 1) + '.'} ${esc(r.nombre)}${yo ? ' <span class="muted">(tú)</span>' : ''}</span><strong style="color:var(--gold)">${fmt(valor)} ${icono}</strong></div>`;
-}
-async function cargarRanking() {
-  const { data } = await sb.from('ranking').select('nombre, saldo');
-  const lista = data || [];
-  // El podio se pinta 2º, 1º, 3º para que el ganador quede en el centro.
-  $('podio').innerHTML = lista.length >= 3 ? [1, 0, 2].map(i => `
-    <div class="${i === 0 ? 'p1' : ''}"><div class="medalla">${MEDALLAS[i]}</div><div class="nom">${esc(lista[i].nombre)}</div><div class="val">${fmt(lista[i].saldo)} 🪙</div></div>`).join('') : '';
-  $('listaRanking').innerHTML = lista.map((r, i) => filaRanking(r, i, r.saldo, '🪙')).join('') || '<div class="muted">Sin datos.</div>';
+// Cuentas atrás, cada segundo, sin repintar lo demás.
+function tic() {
+  if (!S || $('app').hidden) return;
+  const y = S.yo;
+  const espera = (ultimo, clave) => new Date(ultimo).getTime() + aj(clave) * 60000 - ahora();
+  const barra = (id, ms, clave) => { const e = $(id); if (e) e.style.width = (aj(clave) ? Math.min(100, Math.max(0, (1 - ms / (aj(clave) * 60000)) * 100)) : 100) + '%'; };
+  const preso = y.en_carcel && new Date(y.carcel_hasta).getTime() > ahora();
+  const t = espera(y.ultimo_trabajo, 'cd_trabajo'), s = espera(y.ultimo_trabajo_sucio, 'cd_sucio'),
+        r = espera(y.ultimo_robo, 'cd_robo'), m = espera(y.ultimo_mendigar, 'cd_mendigar');
+  $('bTrabajar').disabled = t > 0 || preso; pon('cdTrabajar', preso ? 'Desde la cárcel no se ficha.' : t > 0 ? 'Descansando: ' + reloj(t) : 'Listo'); barra('barTrabajar', t, 'cd_trabajo');
+  $('bSucio').disabled = s > 0 || preso; pon('cdSucio', preso ? 'Estás en la cárcel.' : s > 0 ? 'Enfriando: ' + reloj(s) : 'Listo'); barra('barSucio', s, 'cd_sucio');
+  $('bRobar').disabled = r > 0 || preso; pon('cdRobar', preso ? 'Estás en la cárcel.' : r > 0 ? 'Puedes volver en ' + reloj(r) : '');
+  $('bMendigar').disabled = m > 0 || preso; pon('cdMendigar', m > 0 ? reloj(m) : '');
+  if ($('cdCarcel')) pon('cdCarcel', reloj(new Date(y.carcel_hasta).getTime() - ahora()));
+  if ($('cdEvento') && S.evento) pon('cdEvento', reloj(new Date(S.evento.fin).getTime() - ahora()));
+  // Al salir de la cárcel, acabar un evento o cambiar de día, se pide el estado nuevo.
+  if ((y.en_carcel && !preso) || (S.evento && new Date(S.evento.fin).getTime() < ahora()) || new Date(S.cambio_dia).getTime() < ahora()) {
+    if (!tic.pidiendo) { tic.pidiendo = true; cargar().finally(() => setTimeout(() => { tic.pidiendo = false; }, 5000)); }
+  }
 }
 
-// ============ Chat ============
-async function cargarChat() {
-  const [mias, rank] = await Promise.all([
-    sb.rpc('mis_monedas_chat'),
-    sb.from('ranking_chat').select('nombre, monedas')
-  ]);
-  S.monedas = mias.data || 0;
-  $('misMonedas').textContent = fmt(S.monedas) + ' 💬';
-  $('kChat').textContent = fmt(S.monedas) + ' 💬';
-  $('rankingChat').innerHTML = (rank.data || []).map((r, i) => filaRanking(r, i, r.monedas, '💬')).join('') || '<div class="muted">Nadie ha escrito todavía.</div>';
+// Tartas sin ver: saltan a pantalla completa, una detrás de otra.
+function tartazos() {
+  if (document.querySelector('.tarta')) return;
+  const vistas = guardado('tartasVistas', []);
+  const t = S.avisos.find(a => a.tipo === 'tarta' && !a.leido && !vistas.includes(a.id));
+  if (!t) return;
+  guardar('tartasVistas', [...vistas, t.id].slice(-50));
+  const d = document.createElement('div');
+  d.className = 'tarta';
+  d.innerHTML = `<div><big>🥧</big><p>${esc(t.texto)}</p><p class="nota">Toca para limpiarte la cara</p></div>`;
+  d.onclick = () => { d.remove(); tartazos(); };
+  document.body.appendChild(d);
 }
 
 // ============ Navegación ============
-function irA(tab, sinScroll) {
-  const boton = document.querySelector(`nav button[data-tab="${CSS.escape(tab)}"]`);
-  if (!boton || boton.style.display === 'none') tab = 'inicio';
-  S.tab = tab;
-  document.querySelectorAll('#app section').forEach(s => s.classList.toggle('active', s.id === tab));
-  document.querySelectorAll('nav button[data-tab]').forEach(x => x.classList.toggle('active', x.dataset.tab === tab));
+function irA(nuevo, sinScroll) {
+  const boton = document.querySelector(`#menu button[data-tab="${CSS.escape(nuevo)}"]`);
+  if (!boton || boton.hidden) nuevo = 'inicio';
+  tab = nuevo;
+  document.querySelectorAll('main > section').forEach(s => s.classList.toggle('activa', s.id === tab));
+  document.querySelectorAll('#menu button').forEach(b => b.classList.toggle('activa', b.dataset.tab === tab));
   history.replaceState(null, '', '#' + tab);
-  refrescarTab();
-  if (!sinScroll) window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (tab === 'gente') cargarChat();
+  if (tab === 'admin') { adminCargar(); cargarSubidos(); }
+  if (!sinScroll) window.scrollTo({ top: 0 });
 }
-function refrescarTab() {
-  if (S.tab === 'ranking') cargarRanking();
-  if (S.tab === 'chat') cargarChat();
-  if (S.tab === 'sonidos') cargarSubidos();
-}
-document.querySelectorAll('nav button[data-tab]').forEach(b => b.onclick = () => irA(b.dataset.tab));
-window.addEventListener('hashchange', () => { if (S.perfil) irA(location.hash.slice(1), true); });
+$('menu').onclick = e => { const b = e.target.closest('button[data-tab]'); if (b) irA(b.dataset.tab); };
+window.addEventListener('hashchange', () => { if (S) irA(location.hash.slice(1), true); });
+$('subtabs').onclick = e => {
+  const b = e.target.closest('button[data-panel]'); if (!b) return;
+  document.querySelectorAll('#subtabs button').forEach(x => x.classList.toggle('activa', x === b));
+  document.querySelectorAll('#admin .panel').forEach(p => p.classList.toggle('activa', p.id === b.dataset.panel));
+};
 
-// ============ Acciones del juego ============
+async function cargarChat() {
+  const { data } = await sb.from('ranking_chat').select('nombre, monedas');
+  ponHtml('listaChat', (data || []).map((r, i) => `
+    <div class="persona" style="cursor:default"><span class="pos">${i + 1}</span><b>${esc(r.nombre)}</b><b class="num">${fmt(r.monedas)}</b></div>`).join('')
+    || '<p class="nota">Nadie ha escrito todavía desde que está el bot.</p>');
+}
+
+// ============ Acciones ============
+const num = id => { const v = parseFloat($(id).value); return Number.isFinite(v) ? v : null; };
+const ent = id => { const v = num(id); return v === null ? null : Math.round(v); };  // para lo que el servidor espera sin decimales
+const vaciar = (...ids) => ids.forEach(id => { $(id).value = ''; delete $(id).dataset.tocado; });
+const quien = id => $(id)?.value || null;
+const ACC = {
+  cerrar: el => el.closest('dialog').close(),
+  todo: el => { $(el.dataset.en).value = el.dataset.de === 'chat' ? S.chat.libres : el.dataset.de === 'cripto' ? Number(S.yo.cripto) : Math.floor(S.yo[el.dataset.de]); },
+  depositar: async el => { if (await hacer('depositar', { p_monto: num('mDepositar') }, el)) vaciar('mDepositar'); },
+  retirar: async el => { if (await hacer('retirar', { p_monto: num('mRetirar') }, el)) vaciar('mRetirar'); },
+  transferir: async el => { if (await hacer('transferir', { p_a: quien('tQuien'), p_monto: num('tMonto'), p_nota: $('tNota').value }, el)) vaciar('tMonto', 'tNota'); },
+  canjear: async el => { if (await hacer('canjear_chat', { p_n: ent('cMonto') }, el)) vaciar('cMonto'); },
+  fundar: async el => { if (await hacer('fundar', { p_nombre: $('eNombre').value, p_sector: $('eSector').value }, el)) vaciar('eNombre'); },
+  mejorar: el => hacer('mejorar', { p_empresa: el.dataset.emp, p_tipo: el.dataset.tipo }, el),
+  vender: el => { if (confirm(`¿Vender ${el.dataset.nombre}? Recuperas el ${aj('venta_pct')} % de lo invertido.`)) hacer('vender_empresa', { p_empresa: el.dataset.emp }, el); },
+  comprar: async el => {
+    const args = { p_item: el.dataset.item, p_a: el.dataset.quien ? quien(el.dataset.quien) : null, p_texto: el.dataset.texto ? $(el.dataset.texto).value : '' };
+    if (await hacer('comprar', args, el) && el.dataset.texto) vaciar(el.dataset.texto);
+  },
+  moneda: async el => {
+    const v = $('monedaVista'); v.classList.remove('gira'); void v.offsetWidth; v.classList.add('gira'); v.textContent = '…';
+    const d = await hacer('moneda', { p_apuesta: num('aMoneda'), p_cara: el.dataset.cara === '1' }, el);
+    v.textContent = d ? (d.cara ? 'CARA' : 'CRUZ') : '?';
+  },
+  slots: async el => {
+    const caras = ['🍒', '🍋', '🔔', '💎', '7️⃣'], rod = [...$('rodillos').children];
+    const giro = setInterval(() => rod.forEach(r => { r.textContent = caras[Math.floor(Math.random() * caras.length)]; }), 70);
+    const [d] = await Promise.all([hacer('tragaperras', { p_apuesta: num('aSlots') }, el, true), new Promise(r => setTimeout(r, 800))]);
+    clearInterval(giro);
+    if (d?.rodillos) { rod.forEach((r, i) => { r.textContent = d.rodillos[i]; }); toast(d.msg, d.ganado > 0 ? 'bien' : d.ganado < 0 ? 'mal' : ''); }
+  },
+  ruleta: el => { if (confirm(`Llevas ${fmt(S.yo.saldo)} en mano. Una de cada seis veces lo pierdes todo. ¿Aprietas?`)) hacer('ruleta_rusa', {}, el); },
+  loteria: el => hacer('loteria_comprar', { p_n: ent('lN') }, el),
+  pcComprar: async el => { if (await hacer('cripto_comprar', { p_gasto: num('pcGasto') }, el)) vaciar('pcGasto'); },
+  pcVender: async el => { if (await hacer('cripto_vender', { p_unidades: num('pcVenta') }, el)) vaciar('pcVenta'); },
+  lavar: async el => { if (await hacer('lavar', { p_monto: num('mLavar') }, el)) vaciar('mLavar'); },
+  robar: el => hacer('robar', { p_a: quien('rQuien') }, el),
+  sabotear: el => hacer('sabotear', { p_a: quien('sQuien') }, el),
+  votar: el => hacer('votar', { p_candidato: el.dataset.id }, el),
+  comprarVotos: el => {
+    const n = parseInt(prompt(`¿Cuántos votos le compras a ${el.dataset.nombre}? De 1 a 10, a ${fmt(aj('voto_precio'))} sucias cada uno. Te pueden pillar.`, '1'), 10);
+    if (n) hacer('comprar_votos', { p_candidato: el.dataset.id, p_n: n }, el);
+  },
+  presentarse: el => hacer('presentarse', { p_renta: num('pRenta'), p_sociedades: num('pSoc'), p_iva: num('pIva'), p_lema: $('pLema').value }, el),
+  gobImpuestos: async el => { if (await hacer('gob_impuestos', { p_renta: num('iRenta'), p_sociedades: num('iSoc'), p_iva: num('iIva') }, el)) vaciar('iRenta', 'iSoc', 'iIva'), cargar(); },
+  gobAuditoria: el => hacer('gob_auditoria', { p_valor: ent('iAud') }, el).then(() => { delete $('iAud').dataset.tocado; }),
+  gobDecreto: el => hacer('gob_decreto', { p_texto: $('iDecreto').value }, el).then(() => { delete $('iDecreto').dataset.tocado; }),
+  gobPaga: async el => { if (await hacer('gob_paga_extra', { p_monto: num('iPaga') }, el)) vaciar('iPaga'); },
+  gobMalversar: async el => { if (await hacer('gob_malversar', { p_monto: num('iMalversar') }, el)) vaciar('iMalversar'); },
+
+  // Ficha de un jugador
+  ficha: el => {
+    const j = S.jugadores.find(x => x.id === el.dataset.id); if (!j) return;
+    if (j.id === S.yo.id) return toast('Ese eres tú. Guapísimo, por cierto.');
+    fichaId = j.id;
+    ponHtml('fNombre', nombreDe(j));
+    pon('fDatos', `${titulo(j.nivel)} de nivel ${j.nivel}. Tiene ${fmt(j.rico)} limpias, de las que lleva ${fmt(j.mano)} en mano.${j.carcel ? ' Está en la cárcel.' : ''}`);
+    pon('fPrecios', `Tartazo ${fmt(conIva(aj('precio_tarta')))}, mote ${fmt(conIva(aj('precio_mote')))}, chivatazo ${fmt(conIva(aj('precio_chivatazo')))}, sabotaje ${fmt(aj('sabotaje_coste'))} sucias.`);
+    $('dFicha').showModal();
+  },
+  fEnviar: async el => { if (await hacer('transferir', { p_a: fichaId, p_monto: num('fMonto'), p_nota: '' }, el)) vaciar('fMonto'); },
+  fRobar: el => hacer('robar', { p_a: fichaId }, el),
+  fSabotear: el => hacer('sabotear', { p_a: fichaId }, el),
+  fChivar: el => hacer('comprar', { p_item: 'chivatazo', p_a: fichaId }, el),
+  fTarta: async el => { if (await hacer('comprar', { p_item: 'tarta', p_a: fichaId, p_texto: $('fTexto').value }, el)) vaciar('fTexto'); },
+  fMote: async el => { if (await hacer('comprar', { p_item: 'mote', p_a: fichaId, p_texto: $('fTexto').value }, el)) vaciar('fTexto'); },
+
+  // ----- Admin -----
+  adminCargar: () => adminCargar(true),
+  adLluvia: el => { const n = Math.abs(num('adLluvia') || 0) * Number(el.dataset.signo); if (n && confirm(`${n > 0 ? 'Regalar' : 'Quitar'} ${fmt(Math.abs(n))} a cada jugador. ¿Seguro?`)) hacer('admin_lluvia', { p_monto: n }, el); },
+  adAjustesReset: el => { if (confirm('Todos los números vuelven a su valor de fábrica. ¿Seguro?')) hacer('admin_ajustes_reset', {}, el); },
+  adSector: async el => { if (await hacer('admin_sector', { p_nombre: $('secNombre').value, p_base: num('secBase'), p_icono: $('secIcono').value }, el)) vaciar('secNombre', 'secBase', 'secIcono'); },
+  adSectorGuardar: el => hacer('admin_sector', { p_nombre: el.dataset.nombre, p_base: parseFloat(el.closest('.fila').querySelector('input').value), p_icono: el.dataset.icono }, el),
+  adSectorBorrar: el => { if (confirm(`¿Borrar el sector ${el.dataset.nombre}?`)) hacer('admin_sector_borrar', { p_nombre: el.dataset.nombre }, el); },
+  adGobierno: async el => {
+    const ok = await hacer('admin_gobierno', { p_tesoro: num('agTesoro'), p_bote: num('agBote'), p_renta: num('agRenta'), p_sociedades: num('agSoc'), p_iva: num('agIva'), p_auditoria: ent('agAud'), p_decreto: $('agDecreto').value }, el);
+    if (ok) ['agTesoro', 'agBote', 'agRenta', 'agSoc', 'agIva', 'agAud', 'agDecreto'].forEach(id => delete $(id).dataset.tocado), adminCargar();
+  },
+  adGobernador: el => hacer('admin_gobernador', { p_jugador: $('agNuevo').value }, el),
+  adVacante: el => { if (confirm('El cargo de gobernador queda vacante. ¿Seguro?')) hacer('admin_gobernador', { p_jugador: null }, el); },
+  adElecciones: el => { if (confirm('Se cuentan los votos ahora y se borra la lista de candidatos de esta semana. ¿Seguro?')) hacer('admin_elecciones', {}, el); },
+  adEvento: el => hacer('admin_evento', { p_clave: $('evClave').value, p_horas: num('evHoras') }, el),
+  adEventoFin: el => hacer('admin_evento', { p_clave: '' }, el),
+  adDia: el => { if (confirm(`Adelantar ${ent('adDias')} día(s) para todo el mundo. No se puede volver atrás. ¿Seguro?`)) hacer('admin_dia', { p_dias: ent('adDias') }, el); },
+  adCripto: async el => { if (await hacer('admin_cripto', { p_precio: num('adCripto') }, el)) vaciar('adCripto'); },
+  adNoticia: async el => { if (await hacer('admin_noticia', { p_icono: $('noIcono').value, p_titulo: $('noTitulo').value, p_texto: $('noTexto').value, p_fija: $('noFija').checked }, el)) vaciar('noTitulo', 'noTexto'); },
+  adNoticiaBorrar: el => hacer('admin_noticia_borrar', { p_id: Number(el.dataset.id) }, el, true),
+  adNoticiasAuto: el => { if (confirm('Se borran todas las noticias que ha generado el juego. Las tuyas se quedan.')) hacer('admin_noticia_borrar', { p_id: null }, el); },
+  adAviso: async el => { if (await hacer('admin_aviso', { p_jugador: null, p_texto: $('meTexto').value, p_tipo: el.dataset.tipo }, el)) vaciar('meTexto'); },
+  adChat: el => { const n = parseInt(prompt(`Monedas de chat de ${el.dataset.nombre}:`, el.dataset.monedas), 10); if (n >= 0) hacer('admin_chat', { p_discord_id: el.dataset.id, p_monedas: n }, el); },
+  adResetTodo: async el => { if (await hacer('admin_reset_todo', { p_confirmar: $('pelConfirmar').value }, el)) vaciar('pelConfirmar'); },
+  adjAbrir: el => {
+    const j = A.jugadores.find(x => x.id === el.dataset.id); if (!j) return;
+    adjId = j.id;
+    pon('adjNombre', j.nombre + (j.mote ? ` «${j.mote}»` : ''));
+    pon('adjDatos', `En mano ${fmt(j.saldo)}, banco ${fmt(j.banco)}, sucio ${fmt(j.sucio)}, ${Number(j.cripto)} PanchoCoin, ${j.xp} de experiencia (nivel ${j.nivel}), ${j.empresas} empresas.`);
+    pon('adjBanBtn', j.baneado ? 'Readmitir' : 'Expulsar'); $('adjBanBtn').dataset.ban = j.baneado ? '0' : '1';
+    $('dAdmin').showModal();
+  },
+  adjDinero: async el => { if (await hacer('admin_dinero', { p_jugador: adjId, p_campo: $('adjCampo').value, p_valor: num('adjValor'), p_sumar: el.dataset.sumar === '1' }, el)) refrescarAdj(); },
+  adjCarcel: el => hacer('admin_carcel', { p_jugador: adjId, p_minutos: Math.round(num('adjCarcel') || 0) }, el),
+  adjLibre: el => hacer('admin_carcel', { p_jugador: adjId, p_minutos: 0 }, el),
+  adjMote: el => hacer('admin_mote', { p_jugador: adjId, p_mote: $('adjMote').value, p_horas: 24 }, el).then(refrescarAdj),
+  adjSinMote: el => hacer('admin_mote', { p_jugador: adjId, p_mote: '' }, el).then(refrescarAdj),
+  adjRenombrar: async el => { if (await hacer('admin_renombrar', { p_jugador: adjId, p_nombre: $('adjRenombrar').value }, el)) vaciar('adjRenombrar'), refrescarAdj(); },
+  adjAviso: async el => { if (await hacer('admin_aviso', { p_jugador: adjId, p_texto: $('adjMensaje').value, p_tipo: el.dataset.tipo }, el)) vaciar('adjMensaje'); },
+  adjEsperas: el => hacer('admin_esperas', { p_jugador: adjId }, el),
+  adjGobernador: el => hacer('admin_gobernador', { p_jugador: adjId }, el),
+  adjBan: el => hacer('admin_ban', { p_jugador: adjId, p_ban: el.dataset.ban === '1' }, el).then(refrescarAdj),
+  adjReset: el => { if (confirm('Pierde todo el dinero, las empresas y el nivel. ¿Seguro?')) hacer('admin_reset_jugador', { p_jugador: adjId }, el).then(refrescarAdj); },
+  pararSonido: () => pararSonido(),
+};
+const refrescarAdj = () => { if (adjId && $('dAdmin').open) ACC.adjAbrir({ dataset: { id: adjId } }); };
+
+document.addEventListener('click', e => {
+  const ir = e.target.closest('[data-ir]'); if (ir) return irA(ir.dataset.ir);
+  const rpc = e.target.closest('[data-rpc]'); if (rpc) return hacer(rpc.dataset.rpc, {}, rpc);
+  const el = e.target.closest('[data-do]'); if (el && ACC[el.dataset.do]) ACC[el.dataset.do](el);
+});
+// Una casilla que el usuario ha tocado no se vuelve a rellenar sola.
+document.addEventListener('input', e => { if (e.target.matches('#ayto input, #aGob input')) e.target.dataset.tocado = '1'; });
+document.querySelectorAll('dialog').forEach(d => d.addEventListener('click', e => { if (e.target === d) d.close(); }));
 $('entrar').onclick = entrar;
 $('salir').onclick = salir;
-$('trabajar').onclick = e => accion('trabajar', {}, 'Trabajo hecho', e.currentTarget);
-$('trabajoSucio').onclick = e => accion('trabajo_sucio', {}, 'Trabajo sucio hecho', e.currentTarget);
-$('lavar').onclick = e => {
-  const monto = +$('montoLavar').value;
-  if (!(monto > 0)) return toast('Pon una cantidad', true);
-  accion('lavar', { monto }, 'Blanqueo en marcha', e.currentTarget).then(() => { $('montoLavar').value = ''; });
+$('campana').onclick = async () => {
+  $('dAvisos').showModal();
+  if (S.avisos.some(a => !a.leido)) { await sb.rpc('avisos_leidos'); S.avisos.forEach(a => { a.leido = true; }); $('nAvisos').hidden = true; }
 };
-$('escudo').onclick = e => accion('comprar_oscuro', { p_item: 'escudo' }, 'Abogado contratado', e.currentTarget);
-$('fundar').onclick = e => {
-  const nombre = $('nombreEmp').value.trim();
-  if (!nombre) return toast('Ponle un nombre a la empresa', true);
-  accion('fundar', { p_nombre: nombre, p_sector: $('sectorEmp').value }, 'Empresa fundada', e.currentTarget).then(() => { $('nombreEmp').value = ''; });
+$('copiarSql').onclick = async () => {
+  try {
+    const txt = await (await fetch('supabase/v2.sql', { cache: 'no-store' })).text();
+    await navigator.clipboard.writeText(txt);
+    toast('SQL copiado. Pégalo en el editor de Supabase y pulsa Run.', 'bien');
+  } catch (e) { toast('No pude copiarlo. Ábrelo desde GitHub: supabase/v2.sql', 'mal'); }
 };
-$('nombreEmp').onkeydown = e => { if (e.key === 'Enter') $('fundar').click(); };
-$('presentarme').onclick = e => accion('presentarse', {}, 'Te has presentado', e.currentTarget);
 
-// ============ Voz (solo dueño) ============
+// ============ Admin ============
+async function adminCargar(avisar) {
+  if (!S?.dueno) return;
+  const { data, error } = await sb.rpc('admin_estado');
+  if (error) return toast(limpiaErr(error), 'mal');
+  A = data;
+  ponHtml('tJug', A.jugadores.map(j => `
+    <tr><td><b>${esc(j.nombre)}</b>${j.mote ? ` <span class="mote">«${esc(j.mote)}»</span>` : ''}</td>
+      <td class="n">${fmt(j.saldo)}</td><td class="n">${fmt(j.banco)}</td><td class="n">${fmt(j.sucio)}</td><td class="n">${j.nivel}</td>
+      <td>${j.baneado ? '<span class="sello rojo">expulsado</span>' : j.en_carcel ? '<span class="sello azul">cárcel</span>' : j.id === A.gobierno.gobernador ? '<span class="sello verde">gobernador</span>' : ''}</td>
+      <td class="n"><button class="btn mini" data-do="adjAbrir" data-id="${esc(j.id)}">Gestionar</button></td></tr>`).join(''));
+  const grupos = {};
+  A.ajustes.forEach(a => (grupos[a.grupo] ||= []).push(a));
+  const abiertos = new Set([...document.querySelectorAll('#ajustes details[open]')].map(d => d.dataset.g));
+  ponHtml('ajustes', Object.entries(grupos).map(([g, lista]) => `
+    <details class="grupo" data-g="${esc(g)}" ${abiertos.has(g) ? 'open' : ''}><summary>${esc(g)}</summary>${lista.map(a => `
+      <label class="ajuste"><span>${esc(a.nombre)}<small>De ${a.minimo} a ${a.maximo} (${a.defecto})</small></span>
+        <input type="number" step="any" min="${a.minimo}" max="${a.maximo}" value="${a.valor}" data-ajuste="${esc(a.clave)}" class="${Number(a.valor) !== Number(a.defecto) ? 'cambiado' : ''}"></label>`).join('')}</details>`).join(''));
+  ponHtml('sectores', A.sectores.map(s => `
+    <div class="fila"><span>${esc(s.icono)} <b>${esc(s.nombre)}</b></span>
+      <div class="linea"><input type="number" min="0" value="${s.base}" class="corto" aria-label="Base de ${esc(s.nombre)}">
+      <button class="btn mini" data-do="adSectorGuardar" data-nombre="${esc(s.nombre)}" data-icono="${esc(s.icono)}">Guardar</button>
+      <button class="btn mini claro" data-do="adSectorBorrar" data-nombre="${esc(s.nombre)}">Borrar</button></div></div>`).join(''));
+  const g = A.gobierno;
+  ponValor('agTesoro', Math.round(g.tesoro)); ponValor('agBote', Math.round(g.bote)); ponValor('agRenta', g.impuestos.renta);
+  ponValor('agSoc', g.impuestos.sociedades); ponValor('agIva', g.impuestos.iva); ponValor('agAud', g.auditoria); ponValor('agDecreto', g.decreto);
+  pon('agQuien', `Ahora gobierna ${g.gobernador_nombre}.`);
+  const opJug = A.jugadores.filter(j => !j.baneado).map(j => `<option value="${esc(j.id)}">${esc(j.nombre)}</option>`).join('');
+  const selG = $('agNuevo'); if (selG._html !== opJug) { selG.innerHTML = opJug; selG._html = opJug; }
+  const selE = $('evClave'), opEv = A.eventos.map(e => `<option value="${esc(e.clave)}">${esc(e.icono)} ${esc(e.nombre)}</option>`).join('');
+  if (selE._html !== opEv) { selE.innerHTML = opEv; selE._html = opEv; }
+  pintarEvento();
+  pon('agEvento', S.evento ? `Activo: ${S.evento.nombre}.` : 'Ahora mismo no hay ningún evento.');
+  ponHtml('adNoticias', A.noticias.map(n => `
+    <div class="fila"><span>${esc(n.icono)} <b>${esc(n.titulo)}</b> <span class="nota">${esc(n.texto)}</span> ${n.fija ? '<span class="sello verde">fija</span>' : ''}${n.auto ? '' : ' <span class="sello azul">tuya</span>'}</span>
+      <button class="btn mini claro" data-do="adNoticiaBorrar" data-id="${n.id}">Borrar</button></div>`).join('') || '<p class="nota">No hay noticias.</p>');
+  ponHtml('tChat', A.chat.map(c => `
+    <tr><td>${esc(c.nombre)}</td><td class="n">${fmt(c.monedas)}</td><td class="n">${fmt(c.gastadas)}</td>
+      <td><button class="btn mini" data-do="adChat" data-id="${esc(c.discord_id)}" data-nombre="${esc(c.nombre)}" data-monedas="${c.monedas}">Cambiar</button></td></tr>`).join('')
+    || '<tr><td colspan="4" class="nota">Nadie ha ganado monedas de chat todavía.</td></tr>');
+  if (avisar) toast('Datos actualizados');
+}
+function pintarEvento() { const e = A?.eventos.find(x => x.clave === $('evClave').value); pon('evTexto', e ? e.texto : ''); }
+$('evClave').onchange = pintarEvento;
+// Los ajustes se guardan al salir de la casilla.
+$('ajustes').addEventListener('change', async e => {
+  const inp = e.target.closest('[data-ajuste]'); if (!inp) return;
+  const { data, error } = await sb.rpc('admin_ajuste', { p_clave: inp.dataset.ajuste, p_valor: parseFloat(inp.value) });
+  if (error) { toast(limpiaErr(error), 'mal'); return adminCargar(); }
+  toast('Guardado. ' + data.msg, 'bien');
+  await cargar(); await adminCargar();
+});
+
+// ============ Bot: voz (solo dueño) ============
 const FRASES = ['Hola a todos', 'Silencio, por favor', 'Atención, comunicado oficial', 'Eso no me lo esperaba', 'Hora de pagar impuestos', 'Enhorabuena', 'Me voy, hasta luego'];
 function pintarVoz() {
-  const chip = t => `<button class="chip btnc" data-frase="${esc(t)}">${esc(t)}</button>`;
+  const chip = t => `<button class="chip" data-frase="${esc(t)}">${esc(t)}</button>`;
   $('frases').innerHTML = FRASES.map(chip).join('');
-  $('historialVoz').innerHTML = guardado('vozHistorial', []).map(chip).join('') || '<span class="muted">Todavía nada.</span>';
+  $('historialVoz').innerHTML = guardado('vozHistorial', []).map(chip).join('') || '<span class="nota">Todavía nada.</span>';
 }
 async function decir(texto) {
   texto = (texto || '').trim();
-  if (!texto) return toast('Escribe algo primero', true);
+  if (!texto) return toast('Escribe algo primero', 'mal');
   const { error } = await sb.rpc('enviar_voz', { p_texto: texto });
-  if (error) return toast(limpiaErr(error), true);
+  if (error) return toast(limpiaErr(error), 'mal');
   guardar('vozHistorial', [texto, ...guardado('vozHistorial', []).filter(t => t !== texto)].slice(0, 8));
-  pintarVoz(); toast('Enviado al canal de voz');
+  pintarVoz(); toast('Enviado al canal de voz', 'bien');
   return true;
 }
 $('enviarVoz').onclick = async () => { if (await decir($('textoVoz').value)) { $('textoVoz').value = ''; $('cuentaVoz').textContent = '0 / 200'; } };
@@ -675,7 +1357,7 @@ $('textoVoz').onkeydown = e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKe
 for (const id of ['frases', 'historialVoz']) $(id).onclick = e => { const b = e.target.closest('[data-frase]'); if (b) decir(b.dataset.frase); };
 pintarVoz();
 
-// ============ Sonidos (solo dueño) ============
+// ============ Bot: sonidos (solo dueño) ============
 const SONIDOS = { bip: '📟', bocina: '📯', boing: '🤸', bombo: '🥁', campanita: '🔔', chispa: '✨', cuerno: '🎺', ding: '🛎️', error: '❌', exito: '✅', explosion: '💥', fanfarria: '🎉', golpe: '👊', gong: '🪘', grillo: '🦗', laser: '🔫', muelle: '🌀', pato: '🦆', platillo: '🛸', radar: '📡', raton: '🐭', redoble: '🥁', sirena: '🚨', sonar: '🌊', tambor: '🪘', telefono: '☎️', tic: '⏱️', tuturu: '🎶', vaso: '🥛', zumbido: '🐝' };
 const PARAR = '__parar__'; // orden especial que entiende el bot
 let subidos = [], audioLocal = null;
@@ -693,26 +1375,25 @@ function pintarSonidos() {
   const q = $('buscarSonido').value.trim().toLowerCase(), favs = guardado('sonFavs', []);
   const orden = (a, b) => (favs.includes(b) - favs.includes(a)) || a.localeCompare(b);
   const fabrica = Object.keys(SONIDOS).map(n => n + '.wav').filter(a => a.includes(q)).sort(orden);
-  $('botonesSonidos').innerHTML = fabrica.map(a => tarjetaSonido(a, SONIDOS[a.replace('.wav', '')], false)).join('') || '<div class="muted">Ningún sonido con ese nombre.</div>';
+  $('botonesSonidos').innerHTML = fabrica.map(a => tarjetaSonido(a, SONIDOS[a.replace('.wav', '')], false)).join('') || '<p class="nota">Ningún sonido con ese nombre.</p>';
   $('subidos').innerHTML = subidos.filter(a => a.includes(q)).sort(orden).map(a => tarjetaSonido(a, '🎵', true)).join('')
-    || `<div class="muted">${subidos.length ? 'Ninguno con ese nombre.' : 'Aún no has subido ningún mp3.'}</div>`;
+    || `<p class="nota">${subidos.length ? 'Ninguno con ese nombre.' : 'Aún no has subido ningún mp3.'}</p>`;
 }
 async function sonar(archivo) {
   const { error } = await sb.rpc('pedir_sonido', { p_archivo: archivo });
-  if (error) return toast(limpiaErr(error), true);
+  if (error) return toast(limpiaErr(error), 'mal');
   const nombre = archivo.replace(/\.(wav|mp3)$/, '');
-  $('sonando').textContent = '🔊 Último enviado: ' + nombre;
+  $('sonando').textContent = 'Último enviado: ' + nombre;
   document.querySelectorAll('.son').forEach(x => x.classList.toggle('activo', x.dataset.archivo === archivo));
-  toast('🔊 ' + nombre);
 }
 // Corta lo que esté sonando en Discord y la escucha local.
 async function pararSonido() {
   audioLocal?.pause();
   const { error } = await sb.rpc('pedir_sonido', { p_archivo: PARAR });
-  if (error) return toast(limpiaErr(error), true);
+  if (error) return toast(limpiaErr(error), 'mal');
   document.querySelectorAll('.son.activo').forEach(x => x.classList.remove('activo'));
-  $('sonando').textContent = '⏹ Parado';
-  toast('⏹ Parado');
+  $('sonando').textContent = 'Parado';
+  toast('Parado');
 }
 // Escucha previa en el navegador: no suena en Discord.
 async function oir(archivo) {
@@ -720,11 +1401,11 @@ async function oir(archivo) {
   let url = 'bot/sonidos/' + archivo;
   if (archivo.endsWith('.mp3')) {
     const { data, error } = await sb.storage.from('sonidos').createSignedUrl(archivo, 60);
-    if (error) return toast(error.message, true);
+    if (error) return toast(error.message, 'mal');
     url = data.signedUrl;
   }
   audioLocal = new Audio(url);
-  audioLocal.play().catch(() => toast('No pude reproducirlo aquí', true));
+  audioLocal.play().catch(() => toast('No pude reproducirlo aquí', 'mal'));
 }
 function alternarFav(archivo) {
   const favs = guardado('sonFavs', []);
@@ -732,30 +1413,31 @@ function alternarFav(archivo) {
   pintarSonidos();
 }
 async function cargarSubidos() {
+  if (!S?.dueno) return;
   const { data, error } = await sb.storage.from('sonidos').list('', { limit: 100, sortBy: { column: 'name', order: 'asc' } });
-  if (error) return toast(error.message, true);
+  if (error) return;
   subidos = (data || []).map(f => f.name).filter(n => /^[a-z0-9_-]+\.mp3$/.test(n));
   pintarSonidos();
 }
 async function subirSonido() {
   const file = $('fileSonido').files[0];
-  if (!file) return toast('Elige un archivo mp3', true);
-  if (!file.name.toLowerCase().endsWith('.mp3')) return toast('Solo mp3', true);
-  if (file.size > 2 * 1024 * 1024) return toast('Máximo 2 MB', true);
+  if (!file) return toast('Elige un archivo mp3', 'mal');
+  if (!file.name.toLowerCase().endsWith('.mp3')) return toast('Solo mp3', 'mal');
+  if (file.size > 2 * 1024 * 1024) return toast('Máximo 2 MB', 'mal');
   const base = file.name.replace(/\.mp3$/i, '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9_-]+/g, '_').replace(/^_+|_+$/g, '') || 'sonido';
-  $('subirSonidoBtn').classList.add('busy');
+  $('subirSonidoBtn').classList.add('ocupado');
   const { error } = await sb.storage.from('sonidos').upload(base + '.mp3', file, { upsert: true, contentType: 'audio/mpeg' });
-  $('subirSonidoBtn').classList.remove('busy');
-  if (error) return toast(error.message, true);
+  $('subirSonidoBtn').classList.remove('ocupado');
+  if (error) return toast(error.message, 'mal');
   $('fileSonido').value = '';
-  toast('Sonido subido: ' + base);
+  toast('Sonido subido: ' + base, 'bien');
   cargarSubidos();
 }
 async function borrarSonido(nombre) {
   if (!confirm('¿Borrar "' + nombre.replace('.mp3', '') + '"? No se puede deshacer.')) return;
   const { error } = await sb.storage.from('sonidos').remove([nombre]);
-  if (error) return toast(error.message, true);
+  if (error) return toast(error.message, 'mal');
   toast('Borrado'); cargarSubidos();
 }
 for (const id of ['botonesSonidos', 'subidos']) $(id).onclick = e => {
@@ -766,18 +1448,17 @@ for (const id of ['botonesSonidos', 'subidos']) $(id).onclick = e => {
 $('buscarSonido').oninput = pintarSonidos;
 $('subirSonidoBtn').onclick = subirSonido;
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && S.dueno && (S.tab === 'sonidos' || S.tab === 'voz')) pararSonido();
+  if (e.key === 'Escape' && S?.dueno && tab === 'admin' && $('aBot').classList.contains('activa') && !document.querySelector('dialog[open]')) pararSonido();
 });
 pintarSonidos();
 
 // ============ Arranque ============
-if (!sb) $('avisoConfig').textContent = 'Falta configurar Supabase: pega la URL y la clave en index.html.';
-else $('avisoConfig').style.display = 'none';
+if (!sb) toast('Falta configurar Supabase en index.html', 'mal');
 cargar();
 setInterval(tic, 1000);
-// Datos frescos sin recargar: la pestaña visible cada 20 s y todo lo demás cada minuto.
-setInterval(() => { if (S.perfil && !document.hidden) refrescarTab(); }, 20000);
-setInterval(() => { if (S.perfil && !document.hidden && !document.querySelector('.busy')) cargar(); }, 60000);
+// Datos frescos sin recargar la página, mientras la pestaña esté a la vista.
+setInterval(() => { if (S && !document.hidden && !document.querySelector('.ocupado')) cargar(); }, 30000);
+document.addEventListener('visibilitychange', () => { if (S && !document.hidden) cargar(); });
 </script>
 </body>
 </html>
