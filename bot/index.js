@@ -131,13 +131,15 @@ async function decirEnCanal(texto) {
 async function vigilarVoz() {
   if (!supabase) return;
   try {
-    const { data } = await supabase.from('voz_pendiente').select('id, texto').eq('hecho', false).order('id').limit(1);
+    const { data, error } = await supabase.from('voz_pendiente').select('id, texto').eq('hecho', false).order('id').limit(1);
+    if (error) throw new Error('voz_pendiente: ' + error.message);
     const orden = data?.[0];
     if (orden) {
       await supabase.from('voz_pendiente').update({ hecho: true }).eq('id', orden.id);
       await decirEnCanal(orden.texto);
     }
-    const { data: sons } = await supabase.from('sonido_pendiente').select('id, archivo').eq('hecho', false).order('id').limit(1);
+    const { data: sons, error: errSon } = await supabase.from('sonido_pendiente').select('id, archivo').eq('hecho', false).order('id').limit(1);
+    if (errSon) throw new Error('sonido_pendiente: ' + errSon.message);
     const son = sons?.[0];
     if (son) {
       await supabase.from('sonido_pendiente').update({ hecho: true }).eq('id', son.id);
@@ -249,7 +251,11 @@ async function ejecutar(cmd, i, e) {
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates, GatewayIntentBits.GuildMessages]
 });
-client.once('ready', () => { console.log('Conectado como ' + client.user.tag); vigilarVoz(); });
+client.once('ready', () => {
+  console.log('Conectado como ' + client.user.tag);
+  if (!supabase) console.error('AVISO: falta SUPABASE_URL o SUPABASE_SERVICE_KEY en .env. No cuento monedas ni hago sonar la voz.');
+  vigilarVoz();
+});
 
 client.on('interactionCreate', async i => {
   if (i.isAutocomplete() && i.commandName === 'poner') {
