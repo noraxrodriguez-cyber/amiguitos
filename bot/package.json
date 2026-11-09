@@ -16,6 +16,7 @@
     "@discordjs/voice": "^0.19.2",
     "@supabase/supabase-js": "^2.119.0",
     "discord.js": "^14.28.1",
-    "libsodium-wrappers": "^0.8.4"
+    "libsodium-wrappers": "^0.8.4",
+    "opusscript": "^0.0.8"
   }
 }

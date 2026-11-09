@@ -142,11 +142,36 @@ async function vigilarVoz() {
     if (errSon) throw new Error('sonido_pendiente: ' + errSon.message);
     const son = sons?.[0];
     if (son) {
-      await supabase.from('sonido_pendiente').update({ hecho: true }).eq('id', son.id);
-      await sonarEfecto(son.archivo);
+      if (son.archivo === PARAR) {
+        // Parar: se descartan también los sonidos que estuvieran esperando.
+        await supabase.from('sonido_pendiente').update({ hecho: true }).eq('hecho', false).lte('id', son.id);
+        pararSonido();
+      } else {
+        await supabase.from('sonido_pendiente').update({ hecho: true }).eq('id', son.id);
+        await sonarEfecto(son.archivo);
+      }
     }
   } catch (err) { console.error('Voz:', err.message); }
   setTimeout(vigilarVoz, 2000);
+}
+
+// Orden especial que manda el botón Parar de la web.
+const PARAR = '__parar__';
+
+// Corta lo que esté sonando y quita de la cola los efectos y voces pendientes. La música en cola sigue.
+function pararSonido() {
+  for (const e of estados.values()) {
+    e.cola = e.cola.filter(x => x.tipo === 'musica');
+    e.player.stop(true);
+  }
+}
+
+// Al arrancar se descartan las órdenes viejas, para que no suenen todas de golpe.
+async function limpiarPendientes() {
+  if (!supabase) return;
+  const hace = new Date(Date.now() - 15_000).toISOString();
+  await supabase.from('sonido_pendiente').update({ hecho: true }).eq('hecho', false).lt('creado', hace);
+  await supabase.from('voz_pendiente').update({ hecho: true }).eq('hecho', false).lt('creado', hace);
 }
 
 // Reproduce un efecto de la carpeta sonidos, cortando lo que suene.
@@ -251,9 +276,10 @@ async function ejecutar(cmd, i, e) {
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates, GatewayIntentBits.GuildMessages]
 });
-client.once('ready', () => {
+client.once('clientReady', async () => {
   console.log('Conectado como ' + client.user.tag);
   if (!supabase) console.error('AVISO: falta SUPABASE_URL o SUPABASE_SERVICE_KEY en .env. No cuento monedas ni hago sonar la voz.');
+  await limpiarPendientes().catch(() => {});
   vigilarVoz();
 });
 
